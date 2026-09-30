@@ -1,13 +1,14 @@
-// Duomenų bazės schema. Kūrimui naudojama SQLite (failas prisma/dev.db).
-// Produkcijai pakanka pakeisti provider į "postgresql" ir DATABASE_URL.
+// Duomenų bazės schema (PostgreSQL – Neon per Vercel).
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Tiesioginė jungtis (be pool) – naudojama db push / migracijoms
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model Sector {

@@ -17,7 +17,10 @@ export function mockPaymentsAllowed(): boolean {
 }
 
 export function siteUrl(): string {
-  return (process.env.SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  // Vercel automatiškai pateikia VERCEL_PROJECT_PRODUCTION_URL (be https://)
+  const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  const url = process.env.SITE_URL || (vercelUrl ? `https://${vercelUrl}` : "http://localhost:3000");
+  return url.replace(/\/$/, "");
 }
 
 /** Sukuria mokėjimą ir grąžina adresą, į kurį reikia nukreipti pirkėją. */

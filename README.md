@@ -1,13 +1,13 @@
 # Šilų (Bridų) tvenkinys – svetainė
 
-Next.js 16 (App Router) + Tailwind CSS 4 + Prisma (SQLite kūrimui).
+Next.js 16 (App Router) + Tailwind CSS 4 + Prisma + PostgreSQL (Neon per Vercel).
 
 ## Paleidimas
 
 ```bash
 npm install
-cp .env.example .env      # ir užpildykite
-npm run db:push           # sukuria duomenų bazę
+vercel env pull .env      # DATABASE_URL ir kt. iš Vercel (arba cp .env.example .env)
+npm run db:push           # sukuria/atnaujina lenteles
 npm run db:seed           # 10 sektorių, laimikiai, varžybų pavyzdys
 npm run dev               # http://localhost:3000
 ```
@@ -52,8 +52,12 @@ Integracija jau parašyta ([src/lib/payments/montonio.ts](src/lib/payments/monto
 
 Kol raktai neįrašyti, naudojamas **testinis mokėjimo puslapis** (tik kūrimo aplinkoje).
 
-## Diegimas į produkciją
+## Diegimas
 
-SQLite netinka serverless platformoms (pvz. Vercel). Produkcijai:
-`prisma/schema.prisma` pakeiskite `provider = "postgresql"`, nustatykite `DATABASE_URL`
-(pvz. Neon, Supabase) ir paleiskite `npm run db:push && npm run db:seed`.
+Vercel projektas `silu-tvenkinys` sujungtas su GitHub – kiekvienas `git push` į `master` automatiškai įkelia naują versiją.
+Duomenų bazė – Neon (`neon-fuchsia-ladder`), prijungta prie projekto per Vercel Storage.
+
+Pakeitus `prisma/schema.prisma`, prieš push paleiskite `npm run db:push`.
+
+**Svarbu:** kol neprijungtas Montonio, Vercel nustatyta `ALLOW_MOCK_PAYMENTS=true` (testinis mokėjimas).
+Prieš paleidžiant svetainę žmonėms – įrašykite Montonio raktus ir šį kintamąjį ištrinkite.

@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Šilų (Bridų) tvenkinys – svetainė
 
-## Getting Started
+Next.js 16 (App Router) + Tailwind CSS 4 + Prisma (SQLite kūrimui).
 
-First, run the development server:
+## Paleidimas
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env      # ir užpildykite
+npm run db:push           # sukuria duomenų bazę
+npm run db:seed           # 10 sektorių, laimikiai, varžybų pavyzdys
+npm run dev               # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Duomenų bazės peržiūra/redagavimas: `npm run db:studio`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Struktūra
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Kelias | Kas tai |
+|---|---|
+| `/` | Pradžia |
+| `/apie` | Apie tvenkinį, sektorių žemėlapis |
+| `/galerija` | Laimikių galerija (`CatchPhoto` lentelė) |
+| `/varzybos` | Varžybos (`Competition` lentelė) |
+| `/taisykles` | Žvejybos taisyklės |
+| `/rezervacija` | Sektoriaus rezervacija pagal datą |
+| `/rezervacija/[id]` | Rezervacijos būsena |
+| `/admin` | Rezervacijų sąrašas (slaptažodis – `ADMIN_USER` / `ADMIN_PASSWORD`) |
 
-## Learn More
+- **Tekstai, kontaktai, taisyklės** – [src/content/site.ts](src/content/site.ts) (vietos su `TODO` laukia tikrų duomenų).
+- **Kainos ir sektoriai** – `Sector` lentelė (kaina centais), pradinės reikšmės [prisma/seed.ts](prisma/seed.ts).
+- **Nuotraukos** – `public/images/`.
 
-To learn more about Next.js, take a look at the following resources:
+## Rezervavimo logika
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Rezervuojama paromis: `dateFrom` (atvykimas) → `dateTo` (išvykimas, 12:00).
+- Sukūrus rezervaciją ji būna `PENDING` ir sektorių laiko 30 min. (`site.booking.holdMinutes`).
+  Jei per tą laiką neapmokama – sektorius vėl laisvas.
+- Gavus apmokėjimą – `PAID`. Du žmonės negali užimti to paties sektoriaus tomis pačiomis dienomis
+  (tikrinama transakcijoje).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Montonio mokėjimai
 
-## Deploy on Vercel
+Integracija jau parašyta ([src/lib/payments/montonio.ts](src/lib/payments/montonio.ts)), tereikia raktų:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Montonio partnerių sistemoje susikurkite parduotuvę ir gaukite **Access Key** ir **Secret Key**
+   (pradžiai – sandbox raktus).
+2. Įrašykite į `.env`: `MONTONIO_ACCESS_KEY`, `MONTONIO_SECRET_KEY`, `MONTONIO_ENV=sandbox`.
+3. `SITE_URL` turi būti viešas adresas – Montonio siunčia patvirtinimą į `SITE_URL/api/montonio/webhook`.
+   Testuojant lokaliai galima naudoti pvz. `ngrok`.
+4. Išbandę sandbox aplinkoje, pakeiskite į produkcinius raktus ir `MONTONIO_ENV=production`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Kol raktai neįrašyti, naudojamas **testinis mokėjimo puslapis** (tik kūrimo aplinkoje).
+
+## Diegimas į produkciją
+
+SQLite netinka serverless platformoms (pvz. Vercel). Produkcijai:
+`prisma/schema.prisma` pakeiskite `provider = "postgresql"`, nustatykite `DATABASE_URL`
+(pvz. Neon, Supabase) ir paleiskite `npm run db:push && npm run db:seed`.

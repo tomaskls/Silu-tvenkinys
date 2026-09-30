@@ -1,0 +1,81 @@
+// Duomenų bazės schema. Kūrimui naudojama SQLite (failas prisma/dev.db).
+// Produkcijai pakanka pakeisti provider į "postgresql" ir DATABASE_URL.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Sector {
+  id           Int           @id @default(autoincrement())
+  number       Int           @unique
+  name         String
+  description  String        @default("")
+  image        String?
+  // Kaina už vieną parą, centais (2500 = 25,00 €)
+  pricePerDay  Int
+  maxAnglers   Int           @default(2)
+  active       Boolean       @default(true)
+  reservations Reservation[]
+}
+
+model Reservation {
+  id              String   @id @default(cuid())
+  sector          Sector   @relation(fields: [sectorId], references: [id])
+  sectorId        Int
+  // Datos saugomos kaip "YYYY-MM-DD" – tokias eilutes galima lyginti leksikografiškai.
+  // dateFrom – atvykimo diena, dateTo – išvykimo diena (neįskaičiuota į užimtumą).
+  dateFrom        String
+  dateTo          String
+  days            Int
+  anglers         Int      @default(1)
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+  notes           String   @default("")
+  totalCents      Int
+  // PENDING – laukiama apmokėjimo, PAID – apmokėta, CANCELLED – atšaukta, EXPIRED – nesumokėta laiku
+  status          String   @default("PENDING")
+  // Iki kada laikomas nepatvirtintas (neapmokėtas) rezervavimas
+  holdUntil       DateTime
+  paymentProvider String?
+  paymentOrderId  String?
+  paidAt          DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([sectorId, dateFrom, dateTo])
+  @@index([status])
+}
+
+model Competition {
+  id           Int      @id @default(autoincrement())
+  title        String
+  date         String
+  endDate      String?
+  description  String
+  entryFee     Int?
+  maxTeams     Int?
+  image        String?
+  // Rezultatai po varžybų (laisvas tekstas)
+  results      String?
+  published    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
+
+model CatchPhoto {
+  id        Int      @id @default(autoincrement())
+  image     String
+  angler    String
+  species   String
+  weightKg  Float?
+  sector    Int?
+  date      String
+  caption   String   @default("")
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+}

@@ -1,26 +1,46 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Spalvos: pušynas, vanduo ir medinių lieptų atspalvis */
+  --color-pine-950: #0d1f1b;
+  --color-pine-900: #14302a;
+  --color-pine-800: #1c4238;
+  --color-pine-700: #245446;
+  --color-pine-100: #e3ece6;
+  --color-pine-50: #f1f6f2;
+  --color-lake-700: #1b5d75;
+  --color-lake-600: #1f6f8b;
+  --color-lake-500: #2b87a6;
+  --color-lake-100: #dcedf3;
+  --color-wood-600: #a95e2b;
+  --color-wood-500: #c8743a;
+  --color-wood-400: #dc9258;
+  --color-wood-100: #f7e8da;
+  --color-sand-50: #faf8f3;
+  --color-sand-100: #f2eee4;
+
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-sand-50);
+  color: var(--color-pine-950);
+}
+
+.container-page {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-page {
+    padding-inline: 1.5rem;
+  }
 }

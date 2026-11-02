@@ -76,17 +76,18 @@ export default async function InstructionsPage() {
                   </span>
                   <span className="flex items-center gap-1 text-red-700">
                     <span className="size-2 rounded-full bg-red-600" />
-                    iki 5 d.
+                    užimtas
                   </span>
                 </span>
               }
             >
-              Prie sektoriaus numerio – ar jis laisvas šiandien, o jei užimtas – iki kurios dienos.
+              Prie sektoriaus numerio – ar jis laisvas, ar užimtas mėlynai pažymėtą dieną.
             </Legend>
             <Legend
               sample={<span className="h-8 w-14 rounded border-x-2 border-lake-500 bg-emerald-50/60 ring-1 ring-pine-900/10" />}
             >
-              Mėlynai apvesta – šiandiena. Pilkos dienos – jau praėjusios.
+              Mėlynai apvesta – pasirinkta diena (iš pradžių šiandiena). Paspaudę kitą datą lentelės viršuje, ją pasirinksite, o po
+              antrašte ir prie sektorių numerių pamatysite, kurie sektoriai tą dieną laisvi. Pilkos dienos – jau praėjusios.
             </Legend>
           </ul>
 
@@ -125,7 +126,7 @@ export default async function InstructionsPage() {
             <li>Paspauskite tą šviesų langelį – atsidarys langas.</li>
             <li>
               Nurodykite, kiek <strong>parų</strong> klientas bus. 1 para – nuo {checkInTime} iki kitos dienos {checkOutTime}.
-              Žemiau matysite, kada išvykimas.
+              Žemiau matysite, kada atvykimas ir išvykimas.
             </li>
             <li>
               Įrašykite vardą ir telefoną (nebūtina, bet patogu). Jei klientas jau buvo, pradėkite rašyti vardą ir pasirinkite jį iš
@@ -137,7 +138,7 @@ export default async function InstructionsPage() {
           </ol>
           <ul className="space-y-1.5 rounded-xl bg-sand-50 p-4 text-sm">
             <li>Kompanijai galima pažymėti kelis sektorius iš karto – lange paspauskite kelis numerius.</li>
-            <li>Perbrauktas numeris reiškia, kad tas sektorius tomis dienomis jau užimtas.</li>
+            <li>Pilkas numeris su raudonu apvadu reiškia, kad tas sektorius tomis dienomis jau užimtas.</li>
             <li>Tą patį galima padaryti ir mygtuku „+ Nauja rezervacija“ viršuje.</li>
           </ul>
         </Section>

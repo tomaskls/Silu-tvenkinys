@@ -42,6 +42,7 @@ const MONTHS_SHORT = ["saus.", "vas.", "kov.", "bal.", "geg.", "birž.", "liep."
 
 const weekdayIndex = (d: string) => (new Date(d + "T00:00:00Z").getUTCDay() + 6) % 7;
 const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, "")}`;
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 function describe(r: AdminReservation): string {
   return [`Nr. ${r.sectorNumber}`, formatDateRange(r.dateFrom, r.dateTo), r.customerName, r.customerPhone, r.notes]
@@ -68,8 +69,16 @@ export function ReservationsBoard({ today, start, days, sectors, reservations, u
     return [...byId.values()];
   }, [reservations, upcoming]);
 
-  const busyToday = new Set(known.filter((r) => r.dateFrom <= today && r.dateTo > today).map((r) => r.sectorId)).size;
-  const arrivingToday = known.filter((r) => r.dateFrom === today).length;
+  // Diena, paspausta lentelės antraštėje; jos nesimatant lentelėje – šiandiena arba pirma rodoma diena
+  const [picked, setPicked] = useState<string | null>(null);
+  const inView = (d: string) => d >= start && d < addDays(start, days);
+  const selected = picked && inView(picked) ? picked : inView(today) ? today : start;
+  const busySelected = new Set(known.filter((r) => r.dateFrom <= selected && r.dateTo > selected).map((r) => r.sectorId));
+  const freeSelected = sectors
+    .filter((s) => !busySelected.has(s.id))
+    .map((s) => s.number)
+    .sort((a, b) => a - b);
+  const selectedLabel = selected === today ? "Šiandien" : capitalize(formatDate(selected, { year: undefined }));
 
   function open(next: Draft) {
     setDraft(next);
@@ -98,7 +107,9 @@ export function ReservationsBoard({ today, start, days, sectors, reservations, u
         <div>
           <h1 className="font-display text-3xl font-semibold text-pine-900">Sektorių užimtumas</h1>
           <p className="mt-1 text-sm text-pine-700">
-            Šiandien užimta {busyToday} iš {sectors.length} · atvyksta {arrivingToday}
+            {freeSelected.length > 0
+              ? `${selectedLabel} laisva: ${freeSelected.join(", ")}`
+              : `${selectedLabel} laisvų sektorių nėra`}
           </p>
         </div>
         <button
@@ -115,6 +126,8 @@ export function ReservationsBoard({ today, start, days, sectors, reservations, u
         start={start}
         days={days}
         today={today}
+        selected={selected}
+        onSelect={setPicked}
         sectors={sectors}
         reservations={reservations}
         known={known}
@@ -124,8 +137,8 @@ export function ReservationsBoard({ today, start, days, sectors, reservations, u
       <p className="mt-2 text-xs leading-relaxed text-pine-700">
         Šviesus langelis – sektorius laisvas: paspaudę pažymėsite jį užimtu. Paspauskite rezervaciją – galėsite ją pakeisti arba
         ištrinti. Juosta prasideda atvykimo dieną {site.booking.checkInTime} ir baigiasi išvykimo dieną{" "}
-        {site.booking.checkOutTime} – po to sektorius jau laisvas. Skaičius po data – kiek sektorių tą dieną laisva atvykti, prie
-        sektoriaus numerio – ar jis laisvas {start === today ? "šiandien" : formatDate(start, { year: undefined })}.{" "}
+        {site.booking.checkOutTime} – po to sektorius jau laisvas. Skaičius po data – kiek sektorių tą dieną laisva atvykti.
+        Paspaudę datą, ją pasirinksite: viršuje ir prie sektorių numerių matysite, kurie sektoriai tą dieną laisvi.{" "}
         <Link href="/admin/instrukcija" className="font-semibold text-lake-700 underline">
           Instrukcija
         </Link>
@@ -204,6 +217,9 @@ type GridProps = {
   start: string;
   days: number;
   today: string;
+  /** Mėlynai pažymėta diena */
+  selected: string;
+  onSelect: (date: string) => void;
   sectors: Sector[];
   reservations: AdminReservation[];
   /** Ir už rodomo laikotarpio – sektoriaus būsenai („užimtas iki“) */
@@ -212,7 +228,7 @@ type GridProps = {
   onEdit: (r: AdminReservation) => void;
 };
 
-function OccupancyGrid({ start, days, today, sectors, reservations, known, onCreate, onEdit }: GridProps) {
+function OccupancyGrid({ start, days, today, selected, onSelect, sectors, reservations, known, onCreate, onEdit }: GridProps) {
   const dates = useMemo(() => Array.from({ length: days }, (_, i) => addDays(start, i)), [start, days]);
   const end = addDays(start, days);
   // Kiekviena diena – du pusės dienos stulpeliai, kad juosta prasidėtų ir baigtųsi dienos viduryje.
@@ -228,18 +244,29 @@ function OccupancyGrid({ start, days, today, sectors, reservations, known, onCre
     [dates, sectors, reservations],
   );
 
-  // Kiekvieno sektoriaus būsena pirmą rodomą dieną
-  const busyUntil = useMemo(() => new Map(sectors.map((s) => [s.id, occupiedUntil(known, s.id, start)])), [sectors, known, start]);
-  // „5 d.“, kito mėnesio diena – „12-05“
-  const untilLabel = (d: string) => (d.slice(0, 7) === start.slice(0, 7) ? `${Number(d.slice(8))} d.` : d.slice(5));
+  // Kiekvieno sektoriaus būsena pasirinktą dieną
+  const busyUntil = useMemo(
+    () => new Map(sectors.map((s) => [s.id, occupiedUntil(known, s.id, selected)])),
+    [sectors, known, selected],
+  );
 
   // Laisvi langeliai beveik balti su švelniu žaliu atspalviu (savaitgaliai – kiek ryškesni), kad raudonos juostos išsiskirtų;
-  // praėjusios dienos pilkos, šiandiena – mėlynais kraštais
+  // praėjusios dienos pilkos, pasirinkta diena – mėlynais kraštais
   const cellStyle = (d: string) => {
-    if (d < today) return "bg-stone-100 hover:bg-stone-200";
-    const free = weekdayIndex(d) >= 5 ? "bg-emerald-100/60 hover:bg-emerald-200/70" : "bg-emerald-50/60 hover:bg-emerald-100";
-    return d === today ? `${free} shadow-[inset_2px_0_0_var(--color-lake-500),inset_-2px_0_0_var(--color-lake-500)]` : free;
+    const base =
+      d < today
+        ? "bg-stone-100 hover:bg-stone-200"
+        : weekdayIndex(d) >= 5
+          ? "bg-emerald-100/60 hover:bg-emerald-200/70"
+          : "bg-emerald-50/60 hover:bg-emerald-100";
+    return d === selected ? `${base} shadow-[inset_2px_0_0_var(--color-lake-500),inset_-2px_0_0_var(--color-lake-500)]` : base;
   };
+
+  // Pasirinkta diena – mėlynu fonu, šiandiena (jei nepasirinkta) – mėlynu tekstu
+  const headStyle = (d: string) =>
+    d === selected
+      ? "bg-lake-100 text-lake-700"
+      : `hover:bg-lake-100/50 ${d === today ? "text-lake-700" : weekdayIndex(d) >= 5 ? "text-wood-600" : "text-pine-800"}`;
 
   const countStyle = (d: string, free: number) =>
     d < today ? "bg-stone-200 text-stone-500" : free === 0 ? "bg-red-600 text-white" : "bg-emerald-600 text-white";
@@ -252,30 +279,29 @@ function OccupancyGrid({ start, days, today, sectors, reservations, known, onCre
           <div className="sticky left-0 z-20 flex flex-col justify-end bg-sand-100 px-2 pb-1.5 text-left text-[11px] font-semibold leading-5 text-pine-700">
             Laisva
           </div>
-          {dates.map((d, i) => {
-            const wd = weekdayIndex(d);
-            return (
-              <div
-                key={d}
-                style={{ gridColumn: "span 2" }}
-                className={`border-l border-pine-900/10 px-1 py-1.5 ${
-                  d === today ? "bg-lake-100 text-lake-700" : wd >= 5 ? "text-wood-600" : "text-pine-800"
-                }`}
+          {dates.map((d, i) => (
+            <button
+              key={d}
+              type="button"
+              style={{ gridColumn: "span 2" }}
+              onClick={() => onSelect(d)}
+              aria-pressed={d === selected}
+              aria-label={`${formatDate(d)}: laisvų sektorių ${freeCounts[i]} iš ${sectors.length}`}
+              className={`border-l border-pine-900/10 px-1 py-1.5 transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-lake-500 ${headStyle(d)}`}
+            >
+              <span className="block text-[11px] font-semibold">{WEEKDAYS[weekdayIndex(d)]}</span>
+              <span className="block font-display text-lg font-semibold leading-tight">{Number(d.slice(8))}</span>
+              <span className="block h-3 text-[10px] leading-none opacity-80">
+                {i === 0 || d.endsWith("-01") ? MONTHS_SHORT[Number(d.slice(5, 7)) - 1] : ""}
+              </span>
+              <span
+                title={`Laisvų sektorių: ${freeCounts[i]} iš ${sectors.length}`}
+                className={`mx-auto mt-1 block w-fit min-w-6 rounded-full px-1.5 text-xs font-bold leading-5 ${countStyle(d, freeCounts[i])}`}
               >
-                <div className="text-[11px] font-semibold">{WEEKDAYS[wd]}</div>
-                <div className="font-display text-lg font-semibold leading-tight">{Number(d.slice(8))}</div>
-                <div className="h-3 text-[10px] leading-none opacity-80">
-                  {i === 0 || d.endsWith("-01") ? MONTHS_SHORT[Number(d.slice(5, 7)) - 1] : ""}
-                </div>
-                <div
-                  title={`Laisvų sektorių: ${freeCounts[i]} iš ${sectors.length}`}
-                  className={`mx-auto mt-1 w-fit min-w-6 rounded-full px-1.5 text-xs font-bold leading-5 ${countStyle(d, freeCounts[i])}`}
-                >
-                  {freeCounts[i]}
-                </div>
-              </div>
-            );
-          })}
+                {freeCounts[i]}
+              </span>
+            </button>
+          ))}
         </div>
 
         {/* Sektoriai */}
@@ -285,7 +311,7 @@ function OccupancyGrid({ start, days, today, sectors, reservations, known, onCre
             <div key={s.id} className="grid border-b border-pine-900/10 last:border-b-0" style={columns}>
               <div
                 style={{ gridColumn: 1, gridRow: 1 }}
-                title={until ? `Užimtas iki ${formatDate(until)} ${site.booking.checkOutTime}` : `Laisvas ${formatDate(start)}`}
+                title={until ? `Užimtas iki ${formatDate(until)} ${site.booking.checkOutTime}` : `Laisvas ${formatDate(selected)}`}
                 className="sticky left-0 z-20 flex flex-col justify-center border-r border-pine-900/10 bg-white px-2"
               >
                 <span className="text-sm font-semibold text-pine-900">Nr. {s.number}</span>
@@ -293,7 +319,7 @@ function OccupancyGrid({ start, days, today, sectors, reservations, known, onCre
                   className={`flex items-center gap-1 text-[11px] font-semibold leading-tight ${until ? "text-red-700" : "text-emerald-700"}`}
                 >
                   <span className={`size-2 shrink-0 rounded-full ${until ? "bg-red-600" : "bg-emerald-600"}`} />
-                  {until ? `iki ${untilLabel(until)}` : "laisvas"}
+                  {until ? "užimtas" : "laisvas"}
                 </span>
               </div>
               {dates.map((d, i) => (
@@ -524,7 +550,7 @@ function ReservationDialog({ draft, sectors, known, customers, maxDays, onDone, 
                         ? "border-red-600 bg-red-600 text-white"
                         : "border-wood-500 bg-wood-500 text-white"
                       : busy
-                        ? "cursor-not-allowed border-transparent bg-stone-100 text-stone-400 line-through"
+                        ? "cursor-not-allowed border-red-500 bg-stone-100 bg-[linear-gradient(to_top_right,transparent_calc(50%_-_1px),var(--color-red-500)_calc(50%_-_1px),var(--color-red-500)_calc(50%_+_1px),transparent_calc(50%_+_1px))] text-stone-400"
                         : "border-pine-900/15 bg-white text-pine-900 hover:border-pine-700"
                   }`}
                 >
@@ -535,8 +561,8 @@ function ReservationDialog({ draft, sectors, known, customers, maxDays, onDone, 
           </div>
           <p className="mt-1.5 text-xs text-pine-700">
             {isEdit
-              ? "Perbraukti – tomis dienomis užimti."
-              : "Galite pažymėti kelis sektorius – kiekvienam bus sukurta atskira rezervacija. Perbraukti – užimti."}
+              ? "Pilki su raudonu apvadu – tomis dienomis užimti."
+              : "Galite pažymėti kelis sektorius – kiekvienam bus sukurta atskira rezervacija. Pilki su raudonu apvadu – užimti."}
           </p>
         </fieldset>
 
@@ -587,6 +613,14 @@ function ReservationDialog({ draft, sectors, known, customers, maxDays, onDone, 
           </div>
         </div>
         <p className="mt-2 text-sm text-pine-700">
+          Atvykimas:{" "}
+          <strong className="text-pine-900">
+            {isIsoDate(form.dateFrom)
+              ? `${formatDate(form.dateFrom, { year: undefined, weekday: "long" })}, ${site.booking.checkInTime}`
+              : "—"}
+          </strong>
+        </p>
+        <p className="mt-0.5 text-sm text-pine-700">
           Išvykimas:{" "}
           <strong className="text-pine-900">
             {dateTo

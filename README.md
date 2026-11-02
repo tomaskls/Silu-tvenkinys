@@ -43,7 +43,7 @@ Rezervuojama **telefonu**, svetainėje rodomas tik užimtumas.
 Pakeitimai iš karto matomi `/rezervacija` ir pradžios puslapyje; atidarytas užimtumo puslapis
 pats atsinaujina kas minutę. Kliento duomenys viešai nerodomi.
 
-- Rezervuojama paromis: `dateFrom` (atvykimas) → `dateTo` (išvykimas, 12:00, į užimtumą neįskaičiuojama).
+- Rezervuojama paromis: `dateFrom` (atvykimas) → `dateTo` (išvykimas iki 11:30, į užimtumą neįskaičiuojama).
 - Tas pats sektorius negali būti užimtas dviem rezervacijomis tomis pačiomis dienomis (tikrinama transakcijoje).
 
 ## Diegimas

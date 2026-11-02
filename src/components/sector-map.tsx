@@ -30,7 +30,7 @@ type Props = {
 
 const STYLES: Record<MapSector["state"], string> = {
   free: "bg-emerald-600 text-white hover:bg-emerald-700 hover:scale-110 ring-2 ring-white",
-  taken: "bg-stone-400 text-white/90 cursor-not-allowed line-through",
+  taken: "bg-red-600 text-white cursor-not-allowed line-through ring-2 ring-white",
   selected: "bg-wood-500 text-white scale-125 ring-4 ring-white shadow-lg",
   neutral: "bg-red-600 text-white ring-2 ring-white",
 };

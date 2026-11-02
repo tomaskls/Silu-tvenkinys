@@ -16,7 +16,7 @@ export const site = {
   booking: {
     // Para skaičiuojama nuo atvykimo dienos iki kitos dienos
     checkInTime: "12:00",
-    checkOutTime: "12:00",
+    checkOutTime: "11:30",
     maxDays: 7,
     // Kiek dienų į priekį rodomas užimtumas
     bookingWindowDays: 180,
@@ -62,7 +62,7 @@ export const rules: { title: string; items: string[] }[] = [
     items: [
       "Žvejoti galima tik turint galiojantį leidimą (rezervaciją) ir tik rezervuotame sektoriuje.",
       "Žvejys privalo turėti asmens dokumentą ir, esant reikalui, jį pateikti tvenkinio administracijai.",
-      "Para prasideda 12:00 atvykimo dieną ir baigiasi 12:00 išvykimo dieną.",
+      `Para prasideda ${site.booking.checkInTime} atvykimo dieną ir baigiasi ${site.booking.checkOutTime} išvykimo dieną.`,
       "Teritorija stebima vaizdo kameromis.",
     ],
   },

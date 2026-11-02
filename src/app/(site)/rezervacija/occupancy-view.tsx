@@ -106,22 +106,23 @@ export function OccupancyView(props: Props) {
   const freeCount = sectors.filter((s) => s.available).length;
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
-      <div className="space-y-8">
-        {/* 1. Data */}
-        <Step n={1} title="Kada norite atvykti?">
-          <div className="grid gap-6 md:grid-cols-[1fr_200px]">
-            <Calendar
-              month={month}
-              today={today}
-              lastBookable={lastBookable}
-              counts={monthCounts[month]}
-              sectorCount={sectorCount}
-              rangeFrom={dateFrom}
-              rangeTo={dateTo}
-              onMonthChange={loadMonth}
-              onPick={pickDate}
-            />
+    // Kompiuteryje data ir sektoriai – greta (telpa viename ekrane), skambinimo kortelė – po jais per visą plotį
+    <div className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+      {/* 1. Data */}
+      <Step n={1} title="Kada norite atvykti?">
+        <div className="grid gap-6 md:grid-cols-[1fr_200px] lg:grid-cols-1">
+          <Calendar
+            month={month}
+            today={today}
+            lastBookable={lastBookable}
+            counts={monthCounts[month]}
+            sectorCount={sectorCount}
+            rangeFrom={dateFrom}
+            rangeTo={dateTo}
+            onMonthChange={loadMonth}
+            onPick={pickDate}
+          />
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2">
             <div>
               <label htmlFor="days" className="text-sm font-semibold text-pine-900">
                 Parų skaičius
@@ -138,93 +139,95 @@ export function OccupancyView(props: Props) {
                   </option>
                 ))}
               </select>
-              <dl className="mt-4 space-y-1 rounded-xl bg-sand-100 p-4 text-sm">
-                <div>
-                  <dt className="inline text-pine-700">Atvykimas: </dt>
-                  <dd className="inline font-semibold">{formatDate(dateFrom)}</dd>
-                </div>
-                <div>
-                  <dt className="inline text-pine-700">Išvykimas: </dt>
-                  <dd className="inline font-semibold">{formatDate(dateTo)}</dd>
-                </div>
-              </dl>
             </div>
+            {/* Kompiuteryje datos matomos skambinimo kortelėje po žingsniais */}
+            <dl className="space-y-1 rounded-xl bg-sand-100 p-4 text-sm lg:hidden">
+              <div>
+                <dt className="inline text-pine-700">Atvykimas: </dt>
+                <dd className="inline font-semibold">{formatDate(dateFrom)}</dd>
+              </div>
+              <div>
+                <dt className="inline text-pine-700">Išvykimas: </dt>
+                <dd className="inline font-semibold">{formatDate(dateTo)}</dd>
+              </div>
+            </dl>
           </div>
-        </Step>
+        </div>
+      </Step>
 
-        {/* 2. Sektoriai */}
-        <Step n={2} title="Laisvi sektoriai">
-          <div className="mb-3 flex flex-wrap items-center gap-4 text-sm">
-            <Legend className="bg-emerald-600" label="Laisvas" />
-            <Legend className="bg-stone-400" label="Užimtas" />
-            <Legend className="bg-wood-500" label="Pasirinktas" />
-            <span className="ml-auto text-pine-700" aria-live="polite">
-              {loadingSectors ? "Tikrinamas užimtumas…" : `Laisva: ${freeCount} iš ${sectors.length}`}
-            </span>
-          </div>
-          <div className={loadingSectors ? "opacity-60 transition-opacity" : "transition-opacity"}>
-            <SectorMap sectors={mapSectors} onSelect={setSectorId} />
-          </div>
-          {loadError && <p className="mt-3 text-sm text-red-700">{loadError}</p>}
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
-            {sectors.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                disabled={!s.available}
-                onClick={() => setSectorId(s.id)}
-                className={`rounded-xl border px-3 py-2 text-left text-sm transition-colors ${
-                  s.id === selected?.id
-                    ? "border-wood-500 bg-wood-100"
-                    : s.available
-                      ? "border-pine-900/15 bg-white hover:border-pine-700"
-                      : "cursor-not-allowed border-transparent bg-stone-100 text-stone-400"
-                }`}
-              >
-                <span className="block font-semibold">Nr. {s.number}</span>
-                <span className="block">{s.available ? formatMoney(s.pricePerDay) + " / para" : "Užimtas"}</span>
-              </button>
-            ))}
-          </div>
-        </Step>
-      </div>
+      {/* 2. Sektoriai */}
+      <Step n={2} title="Laisvi sektoriai">
+        <div className="mb-3 flex flex-wrap items-center gap-4 text-sm">
+          <Legend className="bg-emerald-600" label="Laisvas" />
+          <Legend className="bg-red-600" label="Užimtas" />
+          <Legend className="bg-wood-500" label="Pasirinktas" />
+          <span className="ml-auto text-pine-700" aria-live="polite">
+            {loadingSectors ? "Tikrinamas užimtumas…" : `Laisva: ${freeCount} iš ${sectors.length}`}
+          </span>
+        </div>
+        <div className={loadingSectors ? "opacity-60 transition-opacity" : "transition-opacity"}>
+          <SectorMap sectors={mapSectors} onSelect={setSectorId} />
+        </div>
+        {loadError && <p className="mt-3 text-sm text-red-700">{loadError}</p>}
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+          {sectors.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              disabled={!s.available}
+              onClick={() => setSectorId(s.id)}
+              className={`rounded-xl border px-3 py-2 text-left text-sm transition-colors ${
+                s.id === selected?.id
+                  ? "border-wood-500 bg-wood-100"
+                  : s.available
+                    ? "border-pine-900/15 bg-white hover:border-pine-700"
+                    : "cursor-not-allowed border-red-200 bg-red-50 text-red-700"
+              }`}
+            >
+              <span className="block font-semibold">Nr. {s.number}</span>
+              <span className="block whitespace-nowrap text-xs">{s.available ? formatMoney(s.pricePerDay) + " / para" : "Užimtas"}</span>
+            </button>
+          ))}
+        </div>
+      </Step>
 
       {/* Rezervacija telefonu */}
-      <aside className="lg:sticky lg:top-24 lg:self-start">
-        <div className="rounded-2xl border border-pine-900/10 bg-white p-6 shadow-sm">
+      <aside className="rounded-2xl border border-pine-900/10 bg-white p-6 shadow-sm lg:col-span-2 lg:grid lg:grid-cols-[minmax(0,1fr)_19rem_16rem] lg:items-center lg:gap-x-10 lg:gap-y-2">
+        <div className="lg:self-end">
           <h2 className="font-display text-2xl font-semibold text-pine-900">Rezervacija telefonu</h2>
           <p className="mt-2 text-sm leading-relaxed text-pine-800">
             Paskambinkite ir pasakykite norimą sektorių bei datas. Rezervaciją pažymėsime iš karto – sektorius šiame
             puslapyje taps užimtas.
           </p>
-          <dl className="mt-5 space-y-3 text-sm">
-            <Row label="Sektorius" value={selected ? `Nr. ${selected.number}` : "—"} />
-            <Row label="Atvykimas" value={`${formatDate(dateFrom)}, ${site.booking.checkInTime}`} />
-            <Row label="Išvykimas" value={`${formatDate(dateTo)}, ${site.booking.checkOutTime}`} />
-            <Row label="Trukmė" value={pluralParos(days)} />
-          </dl>
-          <div className="mt-5 flex items-baseline justify-between border-t border-pine-900/10 pt-5">
+        </div>
+        <dl className="mt-5 space-y-3 text-sm lg:row-span-2 lg:mt-0 lg:space-y-1.5">
+          <Row label="Sektorius" value={selected ? `Nr. ${selected.number}` : "—"} />
+          <Row label="Atvykimas" value={`${formatDate(dateFrom)}, ${site.booking.checkInTime}`} />
+          <Row label="Išvykimas" value={`${formatDate(dateTo)}, ${site.booking.checkOutTime}`} />
+          <Row label="Trukmė" value={pluralParos(days)} />
+        </dl>
+        <div className="mt-5 lg:row-span-2 lg:mt-0">
+          <div className="flex items-baseline justify-between border-t border-pine-900/10 pt-5 lg:border-t-0 lg:pt-0">
             <span className="font-semibold">Kaina</span>
             <span className="font-display text-3xl font-semibold text-pine-900">
               {selected ? formatMoney(selected.pricePerDay * days) : "—"}
             </span>
           </div>
-
           <a
             href={site.phoneHref}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-wood-500 px-6 py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-wood-600"
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-wood-500 px-6 py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-wood-600 lg:mt-3"
           >
             <PhoneIcon />
             {site.phone}
           </a>
-          <p className="mt-3 text-xs leading-relaxed text-pine-700">
-            {selected
-              ? `Sektorius Nr. ${selected.number} šiuo metu laisvas. Užimtumas keičiasi – patvirtinsime skambučio metu.`
-              : freeCount > 0
-                ? "Pasirinkite laisvą sektorių žemėlapyje arba sąraše."
-                : "Šiomis dienomis laisvų sektorių nėra – pasirinkite kitą datą."}
-          </p>
         </div>
+        <p className="mt-3 text-xs leading-relaxed text-pine-700 lg:col-start-1 lg:row-start-2 lg:mt-0 lg:self-start">
+          {selected
+            ? `Sektorius Nr. ${selected.number} šiuo metu laisvas. Užimtumas keičiasi – patvirtinsime skambučio metu.`
+            : freeCount > 0
+              ? "Pasirinkite laisvą sektorių žemėlapyje arba sąraše."
+              : "Šiomis dienomis laisvų sektorių nėra – pasirinkite kitą datą."}
+        </p>
       </aside>
     </div>
   );
@@ -339,7 +342,7 @@ function Calendar({ month, today, lastBookable, counts, sectorCount, rangeFrom, 
           const inRange = d >= rangeFrom && d < rangeTo;
           const isStart = d === rangeFrom;
           const availability =
-            free === undefined ? "" : free === 0 ? "bg-stone-200 text-stone-500" : free < sectorCount / 2 ? "bg-amber-100" : "bg-emerald-50";
+            free === undefined ? "" : free === 0 ? "bg-red-100 text-red-700" : free < sectorCount / 2 ? "bg-amber-100" : "bg-emerald-50";
           return (
             <button
               key={d}
@@ -347,7 +350,7 @@ function Calendar({ month, today, lastBookable, counts, sectorCount, rangeFrom, 
               disabled={disabled}
               onClick={() => onPick(d)}
               title={free !== undefined && !disabled ? `Laisvų sektorių: ${free}` : undefined}
-              className={`relative aspect-square rounded-lg text-sm transition-colors disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-300 ${
+              className={`relative aspect-square rounded-lg text-sm lg:aspect-auto lg:h-11 transition-colors disabled:cursor-not-allowed disabled:bg-transparent disabled:text-stone-300 ${
                 isStart
                   ? "bg-wood-500 font-bold text-white"
                   : inRange

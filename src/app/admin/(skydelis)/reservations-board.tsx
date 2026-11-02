@@ -110,7 +110,7 @@ export function ReservationsBoard({ today, start, days, sectors, reservations, u
         onEdit={openEdit}
       />
       <p className="mt-2 text-xs leading-relaxed text-pine-700">
-        Paspauskite laisvą langelį – pažymėsite sektorių užimtu. Paspauskite rezervaciją – galėsite ją pakeisti arba
+        Žalias langelis – sektorius laisvas: paspaudę pažymėsite jį užimtu. Paspauskite rezervaciją – galėsite ją pakeisti arba
         ištrinti. Juosta rodo paras: išvykimo dieną (nuo {site.booking.checkOutTime}) sektorius jau laisvas.
       </p>
 
@@ -173,7 +173,12 @@ function OccupancyGrid({ start, days, today, sectors, reservations, onCreate, on
   const end = addDays(start, days);
   const columns = { gridTemplateColumns: `4.5rem repeat(${days}, minmax(3.25rem, 1fr))` };
 
-  const dayTint = (d: string) => (d === today ? "bg-lake-100/60" : d < today ? "bg-stone-100/70" : weekdayIndex(d) >= 5 ? "bg-sand-100/70" : "");
+  // Laisvi langeliai žali (savaitgaliai – kiek tamsesni), praėjusios dienos pilkos, šiandiena – mėlynais kraštais
+  const cellStyle = (d: string) => {
+    if (d < today) return "bg-stone-100 hover:bg-stone-200";
+    const free = weekdayIndex(d) >= 5 ? "bg-emerald-200/70 hover:bg-emerald-300/80" : "bg-emerald-100 hover:bg-emerald-200";
+    return d === today ? `${free} shadow-[inset_2px_0_0_var(--color-lake-500),inset_-2px_0_0_var(--color-lake-500)]` : free;
+  };
 
   return (
     <div className="mt-4 overflow-x-auto rounded-2xl border border-pine-900/10 bg-white">
@@ -216,7 +221,7 @@ function OccupancyGrid({ start, days, today, sectors, reservations, onCreate, on
                 style={{ gridColumn: i + 2, gridRow: 1 }}
                 onClick={() => onCreate(s.id, d)}
                 aria-label={`Sektorius ${s.number}, ${formatDate(d)}: pažymėti užimtu`}
-                className={`h-12 border-l border-pine-900/10 transition-colors first-of-type:border-l-0 hover:bg-emerald-100 ${dayTint(d)}`}
+                className={`h-12 border-l border-pine-900/10 transition-colors first-of-type:border-l-0 ${cellStyle(d)}`}
               />
             ))}
             {reservations
@@ -231,7 +236,7 @@ function OccupancyGrid({ start, days, today, sectors, reservations, onCreate, on
                     onClick={() => onEdit(r)}
                     title={describe(r)}
                     style={{ gridColumn: `${from + 2} / ${to + 2}`, gridRow: 1 }}
-                    className={`z-10 my-1.5 flex min-w-0 items-center bg-wood-500 px-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-wood-600 ${
+                    className={`z-10 my-1.5 flex min-w-0 items-center bg-red-600 px-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-red-700 ${
                       r.dateFrom < start ? "" : "ml-1 rounded-l-lg"
                     } ${r.dateTo > end ? "" : "mr-1 rounded-r-lg"} ${r.dateTo <= today ? "opacity-50" : ""}`}
                   >
@@ -264,7 +269,7 @@ function UpcomingList({ upcoming, today, onEdit }: { upcoming: AdminReservation[
               </span>
               <span className="font-semibold text-wood-600 sm:w-14">Nr. {r.sectorNumber}</span>
               {/* Telefone: datos, sektorius ir mygtukas – vienoje eilutėje, klientas – po jais */}
-              <span className="order-4 w-full min-w-0 sm:order-none sm:w-auto sm:flex-1">
+              <span className="order-4 w-full min-w-0 sm:order-0 sm:w-auto sm:flex-1">
                 <span className="font-semibold">{r.customerName || "—"}</span>
                 {r.customerPhone && (
                   <>

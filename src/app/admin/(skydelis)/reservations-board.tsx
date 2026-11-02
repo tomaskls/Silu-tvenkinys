@@ -253,14 +253,15 @@ function UpcomingList({ upcoming, today, onEdit }: { upcoming: AdminReservation[
         <ul className="mt-4 divide-y divide-pine-900/10 overflow-hidden rounded-2xl border border-pine-900/10 bg-white">
           {upcoming.map((r) => (
             <li key={r.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-sm">
-              <span className="w-44 font-semibold text-pine-900">
+              <span className="font-semibold text-pine-900 sm:w-44">
                 {formatDateRange(r.dateFrom, r.dateTo)}
                 {r.dateFrom <= today && (
                   <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">dabar</span>
                 )}
               </span>
-              <span className="w-14 font-semibold text-wood-600">Nr. {r.sectorNumber}</span>
-              <span className="min-w-0 flex-1">
+              <span className="font-semibold text-wood-600 sm:w-14">Nr. {r.sectorNumber}</span>
+              {/* Telefone: datos, sektorius ir mygtukas – vienoje eilutėje, klientas – po jais */}
+              <span className="order-4 w-full min-w-0 sm:order-none sm:w-auto sm:flex-1">
                 <span className="font-semibold">{r.customerName || "—"}</span>
                 {r.customerPhone && (
                   <>
@@ -275,7 +276,7 @@ function UpcomingList({ upcoming, today, onEdit }: { upcoming: AdminReservation[
               <button
                 type="button"
                 onClick={() => onEdit(r)}
-                className="rounded-full border border-pine-900/15 px-3 py-1 text-xs font-semibold text-pine-900 hover:bg-pine-50"
+                className="order-3 ml-auto rounded-full border border-pine-900/15 px-3 py-1 text-xs font-semibold text-pine-900 hover:bg-pine-50 sm:order-last"
               >
                 Keisti
               </button>
@@ -411,7 +412,7 @@ function ReservationDialog({ draft, sectors, known, maxDays, onClose }: DialogPr
 
         <div className="mt-5 grid grid-cols-2 gap-4">
           <label className="block">
-            <span className="text-sm font-semibold text-pine-900">Atvykimas</span>
+            <span className="block text-sm font-semibold text-pine-900">Atvykimas</span>
             <input
               type="date"
               required
@@ -421,7 +422,7 @@ function ReservationDialog({ draft, sectors, known, maxDays, onClose }: DialogPr
             />
           </label>
           <div>
-            <label htmlFor="reservation-days" className="text-sm font-semibold text-pine-900">
+            <label htmlFor="reservation-days" className="block text-sm font-semibold text-pine-900">
               Parų skaičius
             </label>
             <div className="mt-1.5 flex">
@@ -466,7 +467,7 @@ function ReservationDialog({ draft, sectors, known, maxDays, onClose }: DialogPr
 
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <label className="block">
-            <span className="text-sm font-semibold text-pine-900">Vardas, pavardė</span>
+            <span className="block text-sm font-semibold text-pine-900">Vardas, pavardė</span>
             <input
               value={form.customerName}
               onChange={(e) => update({ customerName: e.target.value })}
@@ -496,7 +497,7 @@ function ReservationDialog({ draft, sectors, known, maxDays, onClose }: DialogPr
             />
           </label>
           <label className="block sm:col-span-2">
-            <span className="text-sm font-semibold text-pine-900">Pastabos</span>
+            <span className="block text-sm font-semibold text-pine-900">Pastabos</span>
             <textarea
               rows={2}
               value={form.notes}

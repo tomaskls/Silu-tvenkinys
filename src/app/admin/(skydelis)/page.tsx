@@ -23,7 +23,8 @@ export default async function AdminPage(props: PageProps<"/admin">) {
 
   const [sectors, reservations, upcoming, customers] = await Promise.all([
     prisma.sector.findMany({ where: { active: true }, orderBy: { number: "asc" }, select: { id: true, number: true } }),
-    getReservationsBetween(start, addDays(start, BOARD_DAYS)),
+    // Diena anksčiau – kad matytųsi ir pirmąją rodomą dieną išvykstantys (juosta iki dienos vidurio)
+    getReservationsBetween(addDays(start, -1), addDays(start, BOARD_DAYS)),
     getUpcomingReservations(today),
     getKnownCustomers(),
   ]);

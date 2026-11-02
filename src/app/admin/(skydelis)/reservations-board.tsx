@@ -24,6 +24,9 @@ type Props = {
   maxDays: number;
 };
 
+/** Pranešimas po išsaugojimo ar ištrynimo */
+type Notice = { title: string; detail: string };
+
 type Draft = {
   id?: string;
   sectorIds: number[];
@@ -50,6 +53,14 @@ export function ReservationsBoard({ today, start, days, sectors, reservations, u
   const [draft, setDraft] = useState<Draft | null>(null);
   // Kiekvienas atidarymas – nauja formos būsena
   const [dialogKey, setDialogKey] = useState(0);
+  const [notice, setNotice] = useState<Notice | null>(null);
+
+  // Pranešimas po kelių sekundžių pasislepia pats
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(null), 6000);
+    return () => clearTimeout(timer);
+  }, [notice]);
 
   const known = useMemo(() => {
     const byId = new Map<string, AdminReservation>();
@@ -106,12 +117,15 @@ export function ReservationsBoard({ today, start, days, sectors, reservations, u
         today={today}
         sectors={sectors}
         reservations={reservations}
+        known={known}
         onCreate={(sectorId, date) => openNew([sectorId], date)}
         onEdit={openEdit}
       />
       <p className="mt-2 text-xs leading-relaxed text-pine-700">
-        Žalias langelis – sektorius laisvas: paspaudę pažymėsite jį užimtu. Paspauskite rezervaciją – galėsite ją pakeisti arba
-        ištrinti. Juosta rodo paras: išvykimo dieną (nuo {site.booking.checkOutTime}) sektorius jau laisvas.
+        Šviesus langelis – sektorius laisvas: paspaudę pažymėsite jį užimtu. Paspauskite rezervaciją – galėsite ją pakeisti arba
+        ištrinti. Juosta prasideda atvykimo dieną {site.booking.checkInTime} ir baigiasi išvykimo dieną{" "}
+        {site.booking.checkOutTime} – po to sektorius jau laisvas. Skaičius po data – kiek sektorių tą dieną laisva atvykti, prie
+        sektoriaus numerio – ar jis laisvas {start === today ? "šiandien" : formatDate(start, { year: undefined })}.
       </p>
 
       <UpcomingList upcoming={upcoming} today={today} onEdit={openEdit} />
@@ -124,9 +138,34 @@ export function ReservationsBoard({ today, start, days, sectors, reservations, u
           known={known}
           customers={customers}
           maxDays={maxDays}
+          onDone={setNotice}
           onClose={() => setDraft(null)}
         />
       )}
+
+      {/* Visada įdėtas, kad ekrano skaitytuvai praneštų apie naują pranešimą */}
+      <div
+        role="status"
+        className="pointer-events-none fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 flex justify-center"
+      >
+        {notice && (
+          <div className="pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-2xl bg-pine-900 p-4 text-white shadow-2xl">
+            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-emerald-600 text-lg font-bold">✓</span>
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold">{notice.title}</p>
+              <p className="mt-0.5 text-sm text-white/80">{notice.detail}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setNotice(null)}
+              aria-label="Uždaryti pranešimą"
+              className="-mr-1 -mt-1 grid size-8 shrink-0 place-items-center rounded-full text-xl leading-none text-white/70 hover:bg-white/10"
+            >
+              ×
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -164,33 +203,58 @@ type GridProps = {
   today: string;
   sectors: Sector[];
   reservations: AdminReservation[];
+  /** Ir už rodomo laikotarpio – sektoriaus būsenai („užimtas iki“) */
+  known: AdminReservation[];
   onCreate: (sectorId: number, date: string) => void;
   onEdit: (r: AdminReservation) => void;
 };
 
-function OccupancyGrid({ start, days, today, sectors, reservations, onCreate, onEdit }: GridProps) {
+function OccupancyGrid({ start, days, today, sectors, reservations, known, onCreate, onEdit }: GridProps) {
   const dates = useMemo(() => Array.from({ length: days }, (_, i) => addDays(start, i)), [start, days]);
   const end = addDays(start, days);
-  const columns = { gridTemplateColumns: `4.5rem repeat(${days}, minmax(3.25rem, 1fr))` };
+  // Kiekviena diena – du pusės dienos stulpeliai, kad juosta prasidėtų ir baigtųsi dienos viduryje.
+  // Stulpelių linijos: dienos i pradžia – 2i + 2, vidurys – 2i + 3.
+  const columns = { gridTemplateColumns: `5rem repeat(${days * 2}, minmax(1.625rem, 1fr))` };
 
-  // Laisvi langeliai žali (savaitgaliai – kiek tamsesni), praėjusios dienos pilkos, šiandiena – mėlynais kraštais
+  // Kiek sektorių laisva kiekvieną dieną (išvykimo dieną sektorius laisvas – tą dieną galima atvykti)
+  const freeCounts = useMemo(
+    () =>
+      dates.map(
+        (d) => sectors.filter((s) => !reservations.some((r) => r.sectorId === s.id && r.dateFrom <= d && r.dateTo > d)).length,
+      ),
+    [dates, sectors, reservations],
+  );
+
+  // Kiekvieno sektoriaus būsena pirmą rodomą dieną
+  const busyUntil = useMemo(() => new Map(sectors.map((s) => [s.id, occupiedUntil(known, s.id, start)])), [sectors, known, start]);
+  // „5 d.“, kito mėnesio diena – „12-05“
+  const untilLabel = (d: string) => (d.slice(0, 7) === start.slice(0, 7) ? `${Number(d.slice(8))} d.` : d.slice(5));
+
+  // Laisvi langeliai beveik balti su švelniu žaliu atspalviu (savaitgaliai – kiek ryškesni), kad raudonos juostos išsiskirtų;
+  // praėjusios dienos pilkos, šiandiena – mėlynais kraštais
   const cellStyle = (d: string) => {
     if (d < today) return "bg-stone-100 hover:bg-stone-200";
-    const free = weekdayIndex(d) >= 5 ? "bg-emerald-200/70 hover:bg-emerald-300/80" : "bg-emerald-100 hover:bg-emerald-200";
+    const free = weekdayIndex(d) >= 5 ? "bg-emerald-100/60 hover:bg-emerald-200/70" : "bg-emerald-50/60 hover:bg-emerald-100";
     return d === today ? `${free} shadow-[inset_2px_0_0_var(--color-lake-500),inset_-2px_0_0_var(--color-lake-500)]` : free;
   };
 
+  const countStyle = (d: string, free: number) =>
+    d < today ? "bg-stone-200 text-stone-500" : free === 0 ? "bg-red-600 text-white" : "bg-emerald-600 text-white";
+
   return (
     <div className="mt-4 overflow-x-auto rounded-2xl border border-pine-900/10 bg-white">
-      <div style={{ minWidth: `calc(4.5rem + ${days} * 3.25rem)` }}>
-        {/* Datų antraštė */}
+      <div style={{ minWidth: `calc(5rem + ${days} * 3.25rem)` }}>
+        {/* Datų antraštė su laisvų sektorių skaičiumi */}
         <div className="grid border-b border-pine-900/10 bg-sand-100 text-center" style={columns}>
-          <div className="sticky left-0 z-20 bg-sand-100" />
+          <div className="sticky left-0 z-20 flex flex-col justify-end bg-sand-100 px-2 pb-1.5 text-left text-[11px] font-semibold leading-5 text-pine-700">
+            Laisva
+          </div>
           {dates.map((d, i) => {
             const wd = weekdayIndex(d);
             return (
               <div
                 key={d}
+                style={{ gridColumn: "span 2" }}
                 className={`border-l border-pine-900/10 px-1 py-1.5 ${
                   d === today ? "bg-lake-100 text-lake-700" : wd >= 5 ? "text-wood-600" : "text-pine-800"
                 }`}
@@ -200,55 +264,83 @@ function OccupancyGrid({ start, days, today, sectors, reservations, onCreate, on
                 <div className="h-3 text-[10px] leading-none opacity-80">
                   {i === 0 || d.endsWith("-01") ? MONTHS_SHORT[Number(d.slice(5, 7)) - 1] : ""}
                 </div>
+                <div
+                  title={`Laisvų sektorių: ${freeCounts[i]} iš ${sectors.length}`}
+                  className={`mx-auto mt-1 w-fit min-w-6 rounded-full px-1.5 text-xs font-bold leading-5 ${countStyle(d, freeCounts[i])}`}
+                >
+                  {freeCounts[i]}
+                </div>
               </div>
             );
           })}
         </div>
 
         {/* Sektoriai */}
-        {sectors.map((s) => (
-          <div key={s.id} className="grid border-b border-pine-900/10 last:border-b-0" style={columns}>
-            <div
-              style={{ gridColumn: 1, gridRow: 1 }}
-              className="sticky left-0 z-20 flex items-center border-r border-pine-900/10 bg-white px-3 text-sm font-semibold text-pine-900"
-            >
-              Nr. {s.number}
+        {sectors.map((s) => {
+          const until = busyUntil.get(s.id);
+          return (
+            <div key={s.id} className="grid border-b border-pine-900/10 last:border-b-0" style={columns}>
+              <div
+                style={{ gridColumn: 1, gridRow: 1 }}
+                title={until ? `Užimtas iki ${formatDate(until)} ${site.booking.checkOutTime}` : `Laisvas ${formatDate(start)}`}
+                className="sticky left-0 z-20 flex flex-col justify-center border-r border-pine-900/10 bg-white px-2"
+              >
+                <span className="text-sm font-semibold text-pine-900">Nr. {s.number}</span>
+                <span
+                  className={`flex items-center gap-1 text-[11px] font-semibold leading-tight ${until ? "text-red-700" : "text-emerald-700"}`}
+                >
+                  <span className={`size-2 shrink-0 rounded-full ${until ? "bg-red-600" : "bg-emerald-600"}`} />
+                  {until ? `iki ${untilLabel(until)}` : "laisvas"}
+                </span>
+              </div>
+              {dates.map((d, i) => (
+                <button
+                  key={d}
+                  type="button"
+                  style={{ gridColumn: `${2 * i + 2} / span 2`, gridRow: 1 }}
+                  onClick={() => onCreate(s.id, d)}
+                  aria-label={`Sektorius ${s.number}, ${formatDate(d)}: pažymėti užimtu`}
+                  className={`h-12 border-l border-pine-900/10 transition-colors first-of-type:border-l-0 ${cellStyle(d)}`}
+                />
+              ))}
+              {reservations
+                .filter((r) => r.sectorId === s.id)
+                .map((r) => {
+                  // Nuo atvykimo dienos vidurio iki išvykimo dienos vidurio; už lentelės ribų – nukerpama
+                  const from = r.dateFrom < start ? 2 : 2 * diffDays(start, r.dateFrom) + 3;
+                  const to = r.dateTo < end ? 2 * diffDays(start, r.dateTo) + 3 : 2 * days + 2;
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => onEdit(r)}
+                      title={describe(r)}
+                      style={{ gridColumn: `${from} / ${to}`, gridRow: 1 }}
+                      className={`z-10 my-1.5 flex min-w-0 items-center bg-red-600 px-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-red-700 ${
+                        r.dateFrom < start ? "" : "ml-1 rounded-l-lg"
+                      } ${r.dateTo < end ? "mr-1 rounded-r-lg" : ""} ${r.dateTo <= today ? "opacity-50" : ""}`}
+                    >
+                      <span className="truncate">{r.customerName || "Užimta"}</span>
+                    </button>
+                  );
+                })}
             </div>
-            {dates.map((d, i) => (
-              <button
-                key={d}
-                type="button"
-                style={{ gridColumn: i + 2, gridRow: 1 }}
-                onClick={() => onCreate(s.id, d)}
-                aria-label={`Sektorius ${s.number}, ${formatDate(d)}: pažymėti užimtu`}
-                className={`h-12 border-l border-pine-900/10 transition-colors first-of-type:border-l-0 ${cellStyle(d)}`}
-              />
-            ))}
-            {reservations
-              .filter((r) => r.sectorId === s.id)
-              .map((r) => {
-                const from = Math.max(0, diffDays(start, r.dateFrom));
-                const to = Math.min(days, diffDays(start, r.dateTo));
-                return (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => onEdit(r)}
-                    title={describe(r)}
-                    style={{ gridColumn: `${from + 2} / ${to + 2}`, gridRow: 1 }}
-                    className={`z-10 my-1.5 flex min-w-0 items-center bg-red-600 px-2 text-left text-xs font-semibold text-white shadow-sm transition-colors hover:bg-red-700 ${
-                      r.dateFrom < start ? "" : "ml-1 rounded-l-lg"
-                    } ${r.dateTo > end ? "" : "mr-1 rounded-r-lg"} ${r.dateTo <= today ? "opacity-50" : ""}`}
-                  >
-                    <span className="truncate">{r.customerName || "Užimta"}</span>
-                  </button>
-                );
-              })}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
+}
+
+/** Iki kurios dienos sektorius užimtas nuo `day` (gretimos rezervacijos sujungiamos); null – tą dieną galima atvykti. */
+function occupiedUntil(list: AdminReservation[], sectorId: number, day: string): string | null {
+  let until: string | null = null;
+  const own = list.filter((r) => r.sectorId === sectorId).sort((a, b) => a.dateFrom.localeCompare(b.dateFrom));
+  for (const r of own) {
+    const at = until ?? day;
+    if (r.dateFrom <= at && r.dateTo > at) until = r.dateTo;
+  }
+  return until;
 }
 
 function UpcomingList({ upcoming, today, onEdit }: { upcoming: AdminReservation[]; today: string; onEdit: (r: AdminReservation) => void }) {
@@ -302,19 +394,35 @@ type DialogProps = {
   known: AdminReservation[];
   customers: KnownCustomer[];
   maxDays: number;
+  /** Iškviečiama sėkmingai išsaugojus ar ištrynus */
+  onDone: (notice: Notice) => void;
   onClose: () => void;
 };
 
 const inputClass =
   "mt-1.5 w-full rounded-xl border border-pine-900/20 bg-white px-3 py-2.5 outline-none focus:border-lake-600 focus:ring-2 focus:ring-lake-100";
 
-function ReservationDialog({ draft, sectors, known, customers, maxDays, onClose }: DialogProps) {
+function ReservationDialog({ draft, sectors, known, customers, maxDays, onDone, onClose }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const nameId = useId();
   const [form, setForm] = useState(draft);
   const [error, setError] = useState<string | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [pending, startTransition] = useTransition();
   const isEdit = Boolean(draft.id);
+
+  // „Nr. 1, 3 · lapkričio 3–5 d. · Vardenis“
+  const summary = (d: Draft) =>
+    [
+      `Nr. ${sectors
+        .filter((s) => d.sectorIds.includes(s.id))
+        .map((s) => s.number)
+        .join(", ")}`,
+      formatDateRange(d.dateFrom, addDays(d.dateFrom, d.days)),
+      d.customerName.trim(),
+    ]
+      .filter(Boolean)
+      .join(" · ");
 
   useEffect(() => {
     if (ref.current && !ref.current.open) ref.current.showModal();
@@ -347,19 +455,28 @@ function ReservationDialog({ draft, sectors, known, customers, maxDays, onClose 
     setError(null);
     startTransition(async () => {
       const result = await saveReservationAction(form);
-      if (result.error) setError(result.error);
-      else close();
+      if (result.error) return setError(result.error);
+      onDone({
+        title: isEdit
+          ? "Rezervacija išsaugota"
+          : form.sectorIds.length > 1
+            ? "Sektoriai pažymėti užimtais"
+            : "Sektorius pažymėtas užimtu",
+        detail: summary(form),
+      });
+      close();
     });
   }
 
   function remove() {
-    if (!draft.id || !confirm("Ištrinti šią rezervaciją? Sektorius taps laisvas.")) return;
+    if (!draft.id) return;
     const id = draft.id;
     setError(null);
     startTransition(async () => {
       const result = await deleteReservationAction(id);
-      if (result.error) setError(result.error);
-      else close();
+      if (result.error) return setError(result.error);
+      onDone({ title: "Rezervacija ištrinta", detail: `${summary(draft)}. Sektorius vėl laisvas.` });
+      close();
     });
   }
 
@@ -533,32 +650,62 @@ function ReservationDialog({ draft, sectors, known, customers, maxDays, onClose 
           </p>
         )}
 
-        <div className="mt-6 flex flex-wrap items-center gap-3">
-          <button
-            type="submit"
-            disabled={pending || !canSave}
-            className="rounded-full bg-wood-500 px-6 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-wood-600 disabled:cursor-not-allowed disabled:bg-stone-300"
-          >
-            {pending ? "Saugoma…" : isEdit ? "Išsaugoti" : "Pažymėti užimtą"}
-          </button>
-          <button
-            type="button"
-            onClick={close}
-            className="rounded-full border border-pine-900/20 px-5 py-3 font-semibold text-pine-900 hover:bg-pine-50"
-          >
-            Atšaukti
-          </button>
-          {isEdit && (
+        {confirmingDelete ? (
+          <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4">
+            <p className="font-semibold text-red-900">Ar tikrai ištrinti šią rezervaciją?</p>
+            <p className="mt-1 text-sm text-red-800">{summary(draft)}. Sektorius taps laisvas.</p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={remove}
+                disabled={pending}
+                className="rounded-full bg-red-600 px-5 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-red-700 disabled:opacity-50"
+              >
+                {pending ? "Trinama…" : "Taip, ištrinti"}
+              </button>
+              <button
+                type="button"
+                autoFocus
+                onClick={() => setConfirmingDelete(false)}
+                disabled={pending}
+                className="rounded-full border border-pine-900/20 bg-white px-5 py-2.5 font-semibold text-pine-900 hover:bg-pine-50"
+              >
+                Ne, palikti
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <button
+              type="submit"
+              disabled={pending || !canSave}
+              className="rounded-full bg-wood-500 px-6 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-wood-600 disabled:cursor-not-allowed disabled:bg-stone-300"
+            >
+              {pending ? "Saugoma…" : isEdit ? "Išsaugoti" : "Pažymėti užimtą"}
+            </button>
+            {/* Redaguojant ne „Atšaukti“ – kad nebūtų painiojama su rezervacijos atšaukimu */}
             <button
               type="button"
-              onClick={remove}
-              disabled={pending}
-              className="ml-auto rounded-full px-4 py-3 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
+              onClick={close}
+              className="rounded-full border border-pine-900/20 px-5 py-3 font-semibold text-pine-900 hover:bg-pine-50"
             >
-              Ištrinti
+              {isEdit ? "Uždaryti" : "Atšaukti"}
             </button>
-          )}
-        </div>
+            {isEdit && (
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setConfirmingDelete(true);
+                }}
+                disabled={pending}
+                className="ml-auto rounded-full px-4 py-3 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
+              >
+                Ištrinti
+              </button>
+            )}
+          </div>
+        )}
       </form>
     </dialog>
   );

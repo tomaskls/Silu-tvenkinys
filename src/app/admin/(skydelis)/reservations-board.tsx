@@ -125,7 +125,10 @@ export function ReservationsBoard({ today, start, days, sectors, reservations, u
         Šviesus langelis – sektorius laisvas: paspaudę pažymėsite jį užimtu. Paspauskite rezervaciją – galėsite ją pakeisti arba
         ištrinti. Juosta prasideda atvykimo dieną {site.booking.checkInTime} ir baigiasi išvykimo dieną{" "}
         {site.booking.checkOutTime} – po to sektorius jau laisvas. Skaičius po data – kiek sektorių tą dieną laisva atvykti, prie
-        sektoriaus numerio – ar jis laisvas {start === today ? "šiandien" : formatDate(start, { year: undefined })}.
+        sektoriaus numerio – ar jis laisvas {start === today ? "šiandien" : formatDate(start, { year: undefined })}.{" "}
+        <Link href="/admin/instrukcija" className="font-semibold text-lake-700 underline">
+          Instrukcija
+        </Link>
       </p>
 
       <UpcomingList upcoming={upcoming} today={today} onEdit={openEdit} />

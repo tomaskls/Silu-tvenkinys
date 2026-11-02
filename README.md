@@ -23,34 +23,28 @@ Duomenų bazės peržiūra/redagavimas: `npm run db:studio`.
 | `/galerija` | Laimikių galerija (`CatchPhoto` lentelė) |
 | `/varzybos` | Varžybos (`Competition` lentelė) |
 | `/taisykles` | Žvejybos taisyklės |
-| `/rezervacija` | Sektoriaus rezervacija pagal datą |
-| `/rezervacija/[id]` | Rezervacijos būsena |
-| `/admin` | Rezervacijų sąrašas (slaptažodis – `ADMIN_USER` / `ADMIN_PASSWORD`) |
+| `/rezervacija` | Viešas sektorių užimtumas pagal datą (rezervuojama telefonu) |
+| `/admin` | Užimtumo valdymas: sektorių × dienų lentelė, rezervacijų sąrašas |
+| `/admin/prisijungti` | Administratoriaus prisijungimas (`ADMIN_USER` / `ADMIN_PASSWORD`) |
 
 - **Tekstai, kontaktai, taisyklės** – [src/content/site.ts](src/content/site.ts) (vietos su `TODO` laukia tikrų duomenų).
 - **Kainos ir sektoriai** – `Sector` lentelė (kaina centais), pradinės reikšmės [prisma/seed.ts](prisma/seed.ts).
 - **Nuotraukos** – `public/images/`.
 
-## Rezervavimo logika
+## Rezervavimas
 
-- Rezervuojama paromis: `dateFrom` (atvykimas) → `dateTo` (išvykimas, 12:00).
-- Sukūrus rezervaciją ji būna `PENDING` ir sektorių laiko 30 min. (`site.booking.holdMinutes`).
-  Jei per tą laiką neapmokama – sektorius vėl laisvas.
-- Gavus apmokėjimą – `PAID`. Du žmonės negali užimti to paties sektoriaus tomis pačiomis dienomis
-  (tikrinama transakcijoje).
+Rezervuojama **telefonu**, svetainėje rodomas tik užimtumas.
 
-## Montonio mokėjimai
+1. Klientas paskambina, administratorius prisijungia `/admin` (sesija galioja 30 d.).
+2. Užimtumo lentelėje paspaudžia laisvą langelį (sektorius × diena), nurodo parų skaičių,
+   jei reikia – vardą, telefoną, pastabas. Galima pažymėti kelis sektorius iš karto.
+3. Paspaudus esamą rezervaciją ją galima pakeisti (datas, sektorių) arba ištrinti.
 
-Integracija jau parašyta ([src/lib/payments/montonio.ts](src/lib/payments/montonio.ts)), tereikia raktų:
+Pakeitimai iš karto matomi `/rezervacija` ir pradžios puslapyje; atidarytas užimtumo puslapis
+pats atsinaujina kas minutę. Kliento duomenys viešai nerodomi.
 
-1. Montonio partnerių sistemoje susikurkite parduotuvę ir gaukite **Access Key** ir **Secret Key**
-   (pradžiai – sandbox raktus).
-2. Įrašykite į `.env`: `MONTONIO_ACCESS_KEY`, `MONTONIO_SECRET_KEY`, `MONTONIO_ENV=sandbox`.
-3. `SITE_URL` turi būti viešas adresas – Montonio siunčia patvirtinimą į `SITE_URL/api/montonio/webhook`.
-   Testuojant lokaliai galima naudoti pvz. `ngrok`.
-4. Išbandę sandbox aplinkoje, pakeiskite į produkcinius raktus ir `MONTONIO_ENV=production`.
-
-Kol raktai neįrašyti, naudojamas **testinis mokėjimo puslapis** (tik kūrimo aplinkoje).
+- Rezervuojama paromis: `dateFrom` (atvykimas) → `dateTo` (išvykimas, 12:00, į užimtumą neįskaičiuojama).
+- Tas pats sektorius negali būti užimtas dviem rezervacijomis tomis pačiomis dienomis (tikrinama transakcijoje).
 
 ## Diegimas
 
@@ -59,5 +53,3 @@ Duomenų bazė – Neon (`neon-fuchsia-ladder`), prijungta prie projekto per Ver
 
 Pakeitus `prisma/schema.prisma`, prieš push paleiskite `npm run db:push`.
 
-**Svarbu:** kol neprijungtas Montonio, Vercel nustatyta `ALLOW_MOCK_PAYMENTS=true` (testinis mokėjimas).
-Prieš paleidžiant svetainę žmonėms – įrašykite Montonio raktus ir šį kintamąjį ištrinkite.

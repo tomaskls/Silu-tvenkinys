@@ -4,14 +4,14 @@ import { getDailyFreeCounts, getSectorAvailability } from "@/lib/reservations";
 import { addDays, todayLt } from "@/lib/format";
 import { site } from "@/content/site";
 import { PageHeader } from "@/components/page-header";
-import { BookingForm } from "./booking-form";
+import { OccupancyView } from "./occupancy-view";
 
 export const metadata: Metadata = {
-  title: "Sektorių rezervacija",
-  description: "Rezervuokite žvejybos sektorių Šilų (Bridų) tvenkinyje internetu.",
+  title: "Sektorių užimtumas",
+  description: `Pasižiūrėkite, kurie Šilų (Bridų) tvenkinio sektoriai laisvi, ir rezervuokite telefonu ${site.phone}.`,
 };
 
-export default async function BookingPage() {
+export default async function OccupancyPage() {
   await connection();
   const today = todayLt();
   const month = today.slice(0, 7);
@@ -26,20 +26,19 @@ export default async function BookingPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Rezervacija"
-        title="Rezervuokite sektorių"
-        intro={`Pasirinkite atvykimo dieną, parų skaičių ir laisvą sektorių. Para – nuo ${site.booking.checkInTime} iki ${site.booking.checkOutTime} kitą dieną.`}
+        eyebrow="Rezervacija telefonu"
+        title="Sektorių užimtumas"
+        intro={`Pasirinkite datą ir pažiūrėkite, kurie sektoriai laisvi. Rezervuoti galima telefonu ${site.phone}. Para – nuo ${site.booking.checkInTime} iki ${site.booking.checkOutTime} kitą dieną.`}
         image="/images/sektorius-2.jpg"
       />
       <div className="container-page py-12">
-        <BookingForm
+        <OccupancyView
           today={today}
           initialMonth={month}
           initialMonthCounts={monthCounts}
           initialSectors={sectors}
           maxDays={site.booking.maxDays}
           bookingWindowDays={site.booking.bookingWindowDays}
-          holdMinutes={site.booking.holdMinutes}
         />
       </div>
     </>

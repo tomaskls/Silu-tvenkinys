@@ -24,33 +24,23 @@ model Sector {
   reservations Reservation[]
 }
 
+// Rezervacijas (priimtas telefonu) įveda administratorius. Kiekvienas įrašas užima sektorių nurodytomis dienomis.
 model Reservation {
-  id              String   @id @default(cuid())
-  sector          Sector   @relation(fields: [sectorId], references: [id])
-  sectorId        Int
+  id            String   @id @default(cuid())
+  sector        Sector   @relation(fields: [sectorId], references: [id])
+  sectorId      Int
   // Datos saugomos kaip "YYYY-MM-DD" – tokias eilutes galima lyginti leksikografiškai.
   // dateFrom – atvykimo diena, dateTo – išvykimo diena (neįskaičiuota į užimtumą).
-  dateFrom        String
-  dateTo          String
-  days            Int
-  anglers         Int      @default(1)
-  customerName    String
-  customerEmail   String
-  customerPhone   String
-  notes           String   @default("")
-  totalCents      Int
-  // PENDING – laukiama apmokėjimo, PAID – apmokėta, CANCELLED – atšaukta, EXPIRED – nesumokėta laiku
-  status          String   @default("PENDING")
-  // Iki kada laikomas nepatvirtintas (neapmokėtas) rezervavimas
-  holdUntil       DateTime
-  paymentProvider String?
-  paymentOrderId  String?
-  paidAt          DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  dateFrom      String
+  dateTo        String
+  // Kliento duomenys matomi tik administratoriui (neprivalomi)
+  customerName  String   @default("")
+  customerPhone String   @default("")
+  notes         String   @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([sectorId, dateFrom, dateTo])
-  @@index([status])
 }
 
 model Competition {

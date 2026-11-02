@@ -1,11 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { useActionState, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { SectorAvailability } from "@/lib/reservations";
 import { addDays, diffDays, formatDate, formatMoney, pluralParos } from "@/lib/format";
+import { site } from "@/content/site";
 import { SectorMap } from "@/components/sector-map";
-import { createReservationAction, type BookingState } from "./actions";
 
 type Props = {
   today: string;
@@ -14,12 +13,13 @@ type Props = {
   initialSectors: SectorAvailability[];
   maxDays: number;
   bookingWindowDays: number;
-  holdMinutes: number;
 };
 
 const WEEKDAYS = ["Pr", "An", "Tr", "Kt", "Pn", "Št", "Sk"];
+// Kas kiek laiko atvirame puslapyje atnaujinamas užimtumas (administratoriaus pakeitimai)
+const REFRESH_MS = 60_000;
 
-export function BookingForm(props: Props) {
+export function OccupancyView(props: Props) {
   const { today, maxDays, bookingWindowDays } = props;
   const lastBookable = addDays(today, bookingWindowDays);
   const sectorCount = props.initialSectors.length;
@@ -34,29 +34,27 @@ export function BookingForm(props: Props) {
   });
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadingSectors, startSectorsTransition] = useTransition();
-  const [customer, setCustomer] = useState({ customerName: "", customerEmail: "", customerPhone: "", anglers: "1", notes: "" });
-  const [state, formAction, submitting] = useActionState<BookingState, FormData>(createReservationAction, {});
+  // Atsakymas į senesnę užklausą neturi perrašyti naujesnės
+  const sectorsRequest = useRef(0);
 
   const selected = sectors.find((s) => s.id === sectorId && s.available) ?? null;
   const dateTo = addDays(dateFrom, days);
 
-  function loadSectors(from: string, n: number) {
-    startSectorsTransition(async () => {
-      try {
-        const res = await fetch(`/api/availability?from=${from}&days=${n}`, { cache: "no-store" });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Nepavyko gauti užimtumo");
-        setSectors(data.sectors);
-        setLoadError(null);
-      } catch (e) {
-        setLoadError(e instanceof Error ? e.message : "Nepavyko gauti užimtumo");
-      }
-    });
-  }
+  const fetchSectors = useCallback(async (from: string, n: number) => {
+    const request = ++sectorsRequest.current;
+    try {
+      const res = await fetch(`/api/availability?from=${from}&days=${n}`, { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Nepavyko gauti užimtumo");
+      if (request !== sectorsRequest.current) return;
+      setSectors(data.sectors);
+      setLoadError(null);
+    } catch (e) {
+      if (request === sectorsRequest.current) setLoadError(e instanceof Error ? e.message : "Nepavyko gauti užimtumo");
+    }
+  }, []);
 
-  async function loadMonth(m: string) {
-    setMonth(m);
-    if (monthCounts[m]) return;
+  const fetchMonth = useCallback(async (m: string) => {
     try {
       const res = await fetch(`/api/availability?month=${m}`, { cache: "no-store" });
       const data = await res.json();
@@ -64,6 +62,30 @@ export function BookingForm(props: Props) {
     } catch {
       // Kalendoriaus spalvos neprivalomos – tyliai ignoruojame
     }
+  }, []);
+
+  // Fone atnaujiname užimtumą, kad administratoriaus pakeitimai matytųsi neperkrovus puslapio
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
+      fetchSectors(dateFrom, days);
+      fetchMonth(month);
+    };
+    const timer = setInterval(refresh, REFRESH_MS);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [dateFrom, days, month, fetchSectors, fetchMonth]);
+
+  function loadSectors(from: string, n: number) {
+    startSectorsTransition(() => fetchSectors(from, n));
+  }
+
+  function loadMonth(m: string) {
+    setMonth(m);
+    if (!monthCounts[m]) fetchMonth(m);
   }
 
   function pickDate(d: string) {
@@ -87,7 +109,7 @@ export function BookingForm(props: Props) {
     <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
       <div className="space-y-8">
         {/* 1. Data */}
-        <Step n={1} title="Atvykimo diena ir trukmė">
+        <Step n={1} title="Kada norite atvykti?">
           <div className="grid gap-6 md:grid-cols-[1fr_200px]">
             <Calendar
               month={month}
@@ -130,8 +152,8 @@ export function BookingForm(props: Props) {
           </div>
         </Step>
 
-        {/* 2. Sektorius */}
-        <Step n={2} title="Pasirinkite sektorių">
+        {/* 2. Sektoriai */}
+        <Step n={2} title="Laisvi sektoriai">
           <div className="mb-3 flex flex-wrap items-center gap-4 text-sm">
             <Legend className="bg-emerald-600" label="Laisvas" />
             <Legend className="bg-stone-400" label="Užimtas" />
@@ -165,132 +187,48 @@ export function BookingForm(props: Props) {
             ))}
           </div>
         </Step>
-
-        {/* 3. Duomenys */}
-        <Step n={3} title="Jūsų duomenys">
-          <form id="booking" action={formAction} className="grid gap-4 sm:grid-cols-2">
-            <input type="hidden" name="sectorId" value={selected?.id ?? ""} />
-            <input type="hidden" name="dateFrom" value={dateFrom} />
-            <input type="hidden" name="days" value={days} />
-            <Field label="Vardas ir pavardė" error={state.fieldErrors?.customerName}>
-              <input
-                name="customerName"
-                required
-                autoComplete="name"
-                value={customer.customerName}
-                onChange={(e) => setCustomer({ ...customer, customerName: e.target.value })}
-                className={inputClass}
-              />
-            </Field>
-            <Field label="Telefonas" error={state.fieldErrors?.customerPhone}>
-              <input
-                name="customerPhone"
-                type="tel"
-                required
-                autoComplete="tel"
-                placeholder="+370 6xx xxxxx"
-                value={customer.customerPhone}
-                onChange={(e) => setCustomer({ ...customer, customerPhone: e.target.value })}
-                className={inputClass}
-              />
-            </Field>
-            <Field label="El. paštas" error={state.fieldErrors?.customerEmail}>
-              <input
-                name="customerEmail"
-                type="email"
-                required
-                autoComplete="email"
-                value={customer.customerEmail}
-                onChange={(e) => setCustomer({ ...customer, customerEmail: e.target.value })}
-                className={inputClass}
-              />
-            </Field>
-            <Field label="Žvejų skaičius" error={state.fieldErrors?.anglers}>
-              <select
-                name="anglers"
-                value={customer.anglers}
-                onChange={(e) => setCustomer({ ...customer, anglers: e.target.value })}
-                className={inputClass}
-              >
-                {Array.from({ length: selected?.maxAnglers ?? 2 }, (_, i) => i + 1).map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <div className="sm:col-span-2">
-              <Field label="Pastabos (neprivaloma)" error={state.fieldErrors?.notes}>
-                <textarea
-                  name="notes"
-                  rows={3}
-                  value={customer.notes}
-                  onChange={(e) => setCustomer({ ...customer, notes: e.target.value })}
-                  className={inputClass}
-                />
-              </Field>
-            </div>
-            <label className="flex items-start gap-3 text-sm sm:col-span-2">
-              <input type="checkbox" name="acceptRules" required className="mt-0.5 size-4 accent-pine-800" />
-              <span>
-                Susipažinau ir sutinku su{" "}
-                <Link href="/taisykles" target="_blank" className="font-semibold text-lake-700 underline">
-                  žvejybos taisyklėmis
-                </Link>
-                .
-                {state.fieldErrors?.acceptRules && (
-                  <span className="block text-red-700">{state.fieldErrors.acceptRules}</span>
-                )}
-              </span>
-            </label>
-          </form>
-        </Step>
       </div>
 
-      {/* Suvestinė */}
+      {/* Rezervacija telefonu */}
       <aside className="lg:sticky lg:top-24 lg:self-start">
         <div className="rounded-2xl border border-pine-900/10 bg-white p-6 shadow-sm">
-          <h2 className="font-display text-2xl font-semibold text-pine-900">Jūsų rezervacija</h2>
+          <h2 className="font-display text-2xl font-semibold text-pine-900">Rezervacija telefonu</h2>
+          <p className="mt-2 text-sm leading-relaxed text-pine-800">
+            Paskambinkite ir pasakykite norimą sektorių bei datas. Rezervaciją pažymėsime iš karto – sektorius šiame
+            puslapyje taps užimtas.
+          </p>
           <dl className="mt-5 space-y-3 text-sm">
             <Row label="Sektorius" value={selected ? `Nr. ${selected.number}` : "—"} />
-            <Row label="Atvykimas" value={formatDate(dateFrom)} />
-            <Row label="Išvykimas" value={formatDate(dateTo)} />
+            <Row label="Atvykimas" value={`${formatDate(dateFrom)}, ${site.booking.checkInTime}`} />
+            <Row label="Išvykimas" value={`${formatDate(dateTo)}, ${site.booking.checkOutTime}`} />
             <Row label="Trukmė" value={pluralParos(days)} />
-            {selected && <Row label="Kaina už parą" value={formatMoney(selected.pricePerDay)} />}
           </dl>
           <div className="mt-5 flex items-baseline justify-between border-t border-pine-900/10 pt-5">
-            <span className="font-semibold">Iš viso</span>
+            <span className="font-semibold">Kaina</span>
             <span className="font-display text-3xl font-semibold text-pine-900">
               {selected ? formatMoney(selected.pricePerDay * days) : "—"}
             </span>
           </div>
 
-          {state.error && (
-            <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-800">
-              {state.error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            form="booking"
-            disabled={!selected || submitting || loadingSectors}
-            className="mt-5 w-full rounded-full bg-wood-500 px-6 py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-wood-600 disabled:cursor-not-allowed disabled:bg-stone-300"
+          <a
+            href={site.phoneHref}
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-wood-500 px-6 py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-wood-600"
           >
-            {submitting ? "Ruošiamas apmokėjimas…" : selected ? "Pereiti prie apmokėjimo" : "Pasirinkite sektorių"}
-          </button>
+            <PhoneIcon />
+            {site.phone}
+          </a>
           <p className="mt-3 text-xs leading-relaxed text-pine-700">
-            Sektorius jums rezervuojamas {props.holdMinutes} min. apmokėjimui atlikti. Rezervacija patvirtinama gavus
-            apmokėjimą.
+            {selected
+              ? `Sektorius Nr. ${selected.number} šiuo metu laisvas. Užimtumas keičiasi – patvirtinsime skambučio metu.`
+              : freeCount > 0
+                ? "Pasirinkite laisvą sektorių žemėlapyje arba sąraše."
+                : "Šiomis dienomis laisvų sektorių nėra – pasirinkite kitą datą."}
           </p>
         </div>
       </aside>
     </div>
   );
 }
-
-const inputClass =
-  "w-full rounded-xl border border-pine-900/20 bg-white px-3 py-2.5 outline-none focus:border-lake-600 focus:ring-2 focus:ring-lake-100";
 
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
@@ -301,16 +239,6 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
       </h2>
       {children}
     </section>
-  );
-}
-
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-sm font-semibold text-pine-900">{label}</span>
-      {children}
-      {error && <span className="mt-1 block text-sm text-red-700">{error}</span>}
-    </label>
   );
 }
 
@@ -329,6 +257,14 @@ function Legend({ className, label }: { className: string; label: string }) {
       <span className={`size-3 rounded-sm ${className}`} />
       {label}
     </span>
+  );
+}
+
+function PhoneIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z" />
+    </svg>
   );
 }
 

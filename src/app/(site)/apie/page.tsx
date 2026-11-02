@@ -80,7 +80,7 @@ export default async function AboutPage() {
           href="/rezervacija"
           className="mt-8 inline-block rounded-full bg-wood-500 px-6 py-3 font-semibold text-white hover:bg-wood-600"
         >
-          Rezervuoti sektorių
+          Sektorių užimtumas
         </Link>
       </section>
 

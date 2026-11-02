@@ -3,19 +3,22 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { prisma } from "@/lib/db";
 import { formatDate, formatMoney, todayLt } from "@/lib/format";
+import { getDailyFreeCounts } from "@/lib/reservations";
 import { pondFacts, site } from "@/content/site";
 import { CatchCard } from "@/components/catch-card";
 
 export default async function HomePage() {
   await connection();
-  const [catches, competitions, cheapest] = await Promise.all([
+  const today = todayLt();
+  const [catches, competitions, cheapest, freeToday] = await Promise.all([
     prisma.catchPhoto.findMany({ where: { published: true }, orderBy: { date: "desc" }, take: 3 }),
     prisma.competition.findMany({
-      where: { published: true, date: { gte: todayLt() } },
+      where: { published: true, date: { gte: today } },
       orderBy: { date: "asc" },
       take: 2,
     }),
     prisma.sector.findFirst({ where: { active: true }, orderBy: { pricePerDay: "asc" } }),
+    getDailyFreeCounts(today, 1).then((counts) => counts[today]),
   ]);
 
   return (
@@ -37,25 +40,26 @@ export default async function HomePage() {
             {site.name}
           </h1>
           <p className="mt-5 max-w-xl text-lg leading-relaxed text-pine-100">
-            {site.tagline}. Pasirinkite datą, sektorių ir apmokėkite internetu – vieta bus jūsų.
+            {site.tagline}. Pasižiūrėkite, kurie sektoriai laisvi, ir rezervuokite telefonu.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               href="/rezervacija"
               className="rounded-full bg-wood-500 px-6 py-3 font-semibold text-white shadow-lg transition-colors hover:bg-wood-600"
             >
-              Rezervuoti sektorių
+              Sektorių užimtumas
             </Link>
-            <Link
-              href="/apie"
+            <a
+              href={site.phoneHref}
               className="rounded-full border border-white/40 px-6 py-3 font-semibold text-white transition-colors hover:bg-white/10"
             >
-              Apie tvenkinį
-            </Link>
+              Skambinti {site.phone}
+            </a>
           </div>
-          {cheapest && (
-            <p className="mt-6 text-sm text-pine-100/80">Para sektoriuje – nuo {formatMoney(cheapest.pricePerDay)}</p>
-          )}
+          <p className="mt-6 text-sm text-pine-100/80">
+            Laisvų sektorių šiandien: {freeToday}
+            {cheapest && ` · para sektoriuje – nuo ${formatMoney(cheapest.pricePerDay)}`}
+          </p>
         </div>
       </section>
 
@@ -76,9 +80,9 @@ export default async function HomePage() {
         <h2 className="font-display text-3xl font-semibold text-pine-900">Kaip rezervuoti?</h2>
         <ol className="mt-8 grid gap-6 sm:grid-cols-3">
           {[
-            { t: "Pasirinkite datą", d: "Nurodykite atvykimo dieną ir kiek parų žvejosite." },
-            { t: "Išsirinkite sektorių", d: "Žemėlapyje matysite, kurie sektoriai tomis dienomis laisvi." },
-            { t: "Apmokėkite internetu", d: "Saugiai sumokėkite per banką – rezervacija patvirtinama iš karto." },
+            { t: "Pasižiūrėkite užimtumą", d: "Kalendoriuje ir žemėlapyje matysite, kurie sektoriai norimomis dienomis laisvi." },
+            { t: "Paskambinkite", d: `Skambinkite ${site.phone} ir pasakykite sektorių bei datas.` },
+            { t: "Atvykite žvejoti", d: `Rezervaciją pažymime iš karto – sektorius jūsų laukia nuo ${site.booking.checkInTime}.` },
           ].map((step, i) => (
             <li key={step.t} className="rounded-2xl border border-pine-900/10 bg-white p-6">
               <span className="grid size-10 place-items-center rounded-full bg-pine-100 font-display text-lg font-semibold text-pine-900">

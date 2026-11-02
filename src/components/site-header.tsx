@@ -37,7 +37,7 @@ export function SiteHeader() {
             href="/rezervacija"
             className="ml-2 rounded-full bg-wood-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-wood-600"
           >
-            Rezervuoti sektorių
+            Sektorių užimtumas
           </Link>
         </nav>
 
@@ -73,7 +73,7 @@ export function SiteHeader() {
               onClick={() => setOpen(false)}
               className="mt-2 rounded-full bg-wood-500 px-4 py-3 text-center font-semibold text-white"
             >
-              Rezervuoti sektorių
+              Sektorių užimtumas
             </Link>
           </div>
         </nav>

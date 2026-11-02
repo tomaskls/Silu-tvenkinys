@@ -35,6 +35,15 @@ export function formatDate(isoDate: string, opts?: Intl.DateTimeFormatOptions): 
   }).format(new Date(isoDate + "T00:00:00Z"));
 }
 
+/** „lapkričio 6–8 d.“, „lapkričio 30 – gruodžio 2 d.“ (to – išvykimo diena) */
+export function formatDateRange(from: string, to: string): string {
+  const range = new Intl.DateTimeFormat("lt-LT", { timeZone: "UTC", month: "long", day: "numeric" }).formatRange(
+    new Date(from + "T00:00:00Z"),
+    new Date(to + "T00:00:00Z"),
+  );
+  return `${range} d.`;
+}
+
 export function formatMoney(cents: number): string {
   return new Intl.NumberFormat("lt-LT", { style: "currency", currency: "EUR" }).format(cents / 100);
 }

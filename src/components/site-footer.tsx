@@ -21,7 +21,7 @@ export function SiteFooter() {
             ))}
             <li>
               <Link href="/rezervacija" className="hover:text-white">
-                Sektorių rezervacija
+                Sektorių užimtumas
               </Link>
             </li>
           </ul>

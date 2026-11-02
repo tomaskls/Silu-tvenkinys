@@ -18,10 +18,8 @@ export const site = {
     checkInTime: "12:00",
     checkOutTime: "12:00",
     maxDays: 7,
-    // Kiek dienų į priekį galima rezervuoti
+    // Kiek dienų į priekį rodomas užimtumas
     bookingWindowDays: 180,
-    // Kiek minučių laikomas neapmokėtas rezervavimas
-    holdMinutes: 30,
   },
 };
 
@@ -99,8 +97,8 @@ export const rules: { title: string; items: string[] }[] = [
   {
     title: "Rezervavimas ir atšaukimas",
     items: [
-      "Rezervacija patvirtinama tik gavus apmokėjimą.",
-      "Atšaukus likus daugiau nei 72 val. iki atvykimo, pinigai grąžinami (TODO: patikslinti).",
+      `Sektoriai rezervuojami telefonu ${site.phone}. Laisvus sektorius matysite puslapyje „Sektorių užimtumas“.`,
+      "Negalėdami atvykti, praneškite kuo anksčiau – sektorių atlaisvinsime kitiems žvejams (TODO: patikslinti atšaukimo sąlygas).",
       "Dėl blogų oro sąlygų ar kitų aplinkybių susisiekite telefonu.",
     ],
   },

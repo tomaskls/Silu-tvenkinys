@@ -44,8 +44,8 @@ export function formatDateRange(from: string, to: string): string {
   return `${range} d.`;
 }
 
-export function formatMoney(cents: number): string {
-  return new Intl.NumberFormat("lt-LT", { style: "currency", currency: "EUR" }).format(cents / 100);
+export function formatMoney(cents: number, opts?: Intl.NumberFormatOptions): string {
+  return new Intl.NumberFormat("lt-LT", { style: "currency", currency: "EUR", ...opts }).format(cents / 100);
 }
 
 export function pluralParos(n: number): string {

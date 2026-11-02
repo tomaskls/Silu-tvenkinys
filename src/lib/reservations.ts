@@ -72,6 +72,28 @@ export async function getDailyFreeCounts(from: string, days: number): Promise<Re
   return result;
 }
 
+/** Laisvų sektorių numeriai kiekvieną nurodytą dieną (pradiniam puslapiui). */
+export async function getFreeSectorNumbers(dates: string[]): Promise<Record<string, number[]>> {
+  const sorted = [...dates].sort();
+  const sectors = await prisma.sector.findMany({
+    where: { active: true },
+    orderBy: { number: "asc" },
+    select: {
+      number: true,
+      reservations: {
+        where: overlapWhere(sorted[0], addDays(sorted[sorted.length - 1], 1)),
+        select: { dateFrom: true, dateTo: true },
+      },
+    },
+  });
+  return Object.fromEntries(
+    dates.map((d) => [
+      d,
+      sectors.filter((s) => !s.reservations.some((r) => r.dateFrom <= d && r.dateTo > d)).map((s) => s.number),
+    ]),
+  );
+}
+
 // ── Administravimas ───────────────────────────────────────────────────────────
 
 /** Rezervacija su kliento duomenimis – tik administratoriui. */

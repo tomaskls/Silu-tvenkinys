@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import type { AdminReservation } from "@/lib/reservations";
-import { addDays, diffDays, formatDate, formatDateRange, isIsoDate, pluralParos } from "@/lib/format";
+import { useEffect, useId, useMemo, useRef, useState, useTransition } from "react";
+import type { AdminReservation, KnownCustomer } from "@/lib/reservations";
+import { addDays, diffDays, formatDate, formatDateRange, isIsoDate, pluralParos, todayLt } from "@/lib/format";
 import { site } from "@/content/site";
 import { deleteReservationAction, saveReservationAction } from "../actions";
 
@@ -19,6 +19,8 @@ type Props = {
   reservations: AdminReservation[];
   /** Visos dabartinės ir būsimos rezervacijos */
   upcoming: AdminReservation[];
+  /** Anksčiau įvesti klientai – vardui pasirinkti iš sąrašo */
+  customers: KnownCustomer[];
   maxDays: number;
 };
 
@@ -44,7 +46,7 @@ function describe(r: AdminReservation): string {
     .join(" · ");
 }
 
-export function ReservationsBoard({ today, start, days, sectors, reservations, upcoming, maxDays }: Props) {
+export function ReservationsBoard({ today, start, days, sectors, reservations, upcoming, customers, maxDays }: Props) {
   const [draft, setDraft] = useState<Draft | null>(null);
   // Kiekvienas atidarymas – nauja formos būsena
   const [dialogKey, setDialogKey] = useState(0);
@@ -120,6 +122,7 @@ export function ReservationsBoard({ today, start, days, sectors, reservations, u
           draft={draft}
           sectors={sectors}
           known={known}
+          customers={customers}
           maxDays={maxDays}
           onClose={() => setDraft(null)}
         />
@@ -292,6 +295,7 @@ type DialogProps = {
   draft: Draft;
   sectors: Sector[];
   known: AdminReservation[];
+  customers: KnownCustomer[];
   maxDays: number;
   onClose: () => void;
 };
@@ -299,8 +303,9 @@ type DialogProps = {
 const inputClass =
   "mt-1.5 w-full rounded-xl border border-pine-900/20 bg-white px-3 py-2.5 outline-none focus:border-lake-600 focus:ring-2 focus:ring-lake-100";
 
-function ReservationDialog({ draft, sectors, known, maxDays, onClose }: DialogProps) {
+function ReservationDialog({ draft, sectors, known, customers, maxDays, onClose }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
+  const nameId = useId();
   const [form, setForm] = useState(draft);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -466,17 +471,18 @@ function ReservationDialog({ draft, sectors, known, maxDays, onClose }: DialogPr
         </p>
 
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          <label className="block">
-            <span className="block text-sm font-semibold text-pine-900">Vardas, pavardė</span>
-            <input
+          <div>
+            <label htmlFor={nameId} className="block text-sm font-semibold text-pine-900">
+              Vardas, pavardė
+            </label>
+            <CustomerNameField
+              id={nameId}
               value={form.customerName}
-              onChange={(e) => update({ customerName: e.target.value })}
-              maxLength={100}
-              autoComplete="off"
-              placeholder="Neprivaloma"
-              className={inputClass}
+              customers={customers}
+              onChange={(customerName) => update({ customerName })}
+              onPick={(c) => update({ customerName: c.name, customerPhone: c.phone })}
             />
-          </label>
+          </div>
           <label className="block">
             <span className="flex items-baseline justify-between text-sm font-semibold text-pine-900">
               Telefonas
@@ -550,5 +556,111 @@ function ReservationDialog({ draft, sectors, known, maxDays, onClose }: DialogPr
         </div>
       </form>
     </dialog>
+  );
+}
+
+type CustomerNameFieldProps = {
+  id: string;
+  value: string;
+  customers: KnownCustomer[];
+  onChange: (name: string) => void;
+  onPick: (customer: KnownCustomer) => void;
+};
+
+const digitsOf = (s: string) => s.replace(/\D/g, "");
+
+/** Vardo laukas su anksčiau įvestų klientų pasiūlymais – ieško pagal vardą arba telefono skaitmenis. */
+function CustomerNameField({ id, value, customers, onChange, onPick }: CustomerNameFieldProps) {
+  const [open, setOpen] = useState(false);
+  // -1 – nė vienas pasiūlymas nepažymėtas (Enter tada išsaugo formą)
+  const [active, setActive] = useState(-1);
+  const listId = `${id}-list`;
+  const thisYear = todayLt().slice(0, 4);
+
+  const query = value.trim().toLowerCase();
+  const digits = digitsOf(value);
+  const matches = customers
+    .filter((c) => !query || c.name.toLowerCase().includes(query) || (digits.length >= 3 && digitsOf(c.phone).includes(digits)))
+    .slice(0, 6);
+  // Jei įvestas vardas jau sutampa su vieninteliu pasiūlymu – sąrašo nebereikia
+  const alreadyPicked = matches.length === 1 && matches[0].name.toLowerCase() === query;
+  const visible = open && matches.length > 0 && !alreadyPicked;
+
+  function pick(c: KnownCustomer) {
+    onPick(c);
+    setOpen(false);
+    setActive(-1);
+  }
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (!visible) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActive((a) => (a + 1) % matches.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActive((a) => (a <= 0 ? matches.length - 1 : a - 1));
+    } else if (e.key === "Enter" && active >= 0) {
+      e.preventDefault();
+      pick(matches[active]);
+    } else if (e.key === "Escape") {
+      // Uždaro tik sąrašą, ne visą langą
+      e.preventDefault();
+      setOpen(false);
+    }
+  }
+
+  return (
+    <div className="relative">
+      <input
+        id={id}
+        role="combobox"
+        aria-expanded={visible}
+        aria-controls={listId}
+        aria-autocomplete="list"
+        aria-activedescendant={visible && active >= 0 ? `${listId}-${active}` : undefined}
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value);
+          setOpen(true);
+          setActive(-1);
+        }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        onKeyDown={onKeyDown}
+        maxLength={100}
+        autoComplete="off"
+        placeholder={customers.length > 0 ? "Įveskite arba pasirinkite" : "Neprivaloma"}
+        className={inputClass}
+      />
+      {visible && (
+        <ul
+          id={listId}
+          role="listbox"
+          // Neleidžia laukui prarasti fokuso, kol paspaudžiamas pasiūlymas
+          onMouseDown={(e) => e.preventDefault()}
+          className="absolute inset-x-0 top-full z-10 mt-1 max-h-72 overflow-y-auto rounded-xl border border-pine-900/15 bg-white py-1 shadow-lg"
+        >
+          {matches.map((c, i) => (
+            <li
+              key={`${c.name}|${c.phone}`}
+              id={`${listId}-${i}`}
+              role="option"
+              aria-selected={i === active}
+              onClick={() => pick(c)}
+              onMouseEnter={() => setActive(i)}
+              className={`cursor-pointer px-3 py-2 ${i === active ? "bg-pine-50" : ""}`}
+            >
+              <span className="block text-sm font-semibold text-pine-900">{c.name}</span>
+              <span className="block text-xs text-pine-700">
+                {[c.phone, c.lastDate && `pask. ${formatDate(c.lastDate, { year: c.lastDate.startsWith(thisYear) ? undefined : "numeric" })}`]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

@@ -122,6 +122,33 @@ export async function getUpcomingReservations(today: string, take = 300): Promis
   return rows.map(toAdminReservation);
 }
 
+/** Anksčiau įvestas klientas – kad vardą ir telefoną būtų galima pasirinkti iš sąrašo. */
+export type KnownCustomer = {
+  name: string;
+  phone: string;
+  /** Naujausios šio kliento rezervacijos atvykimo diena */
+  lastDate: string;
+};
+
+/** Klientai iš rezervacijų (su vardu), naujausi pirmi. */
+export async function getKnownCustomers(limit = 500): Promise<KnownCustomer[]> {
+  const groups = await prisma.reservation.groupBy({
+    by: ["customerName", "customerPhone"],
+    where: { customerName: { not: "" } },
+    _max: { dateFrom: true },
+    orderBy: { _max: { dateFrom: "desc" } },
+    take: limit,
+  });
+  // Tas pats klientas galėjo būti įvestas kitomis raidėmis ar su tarpais telefono numeryje
+  const byKey = new Map<string, KnownCustomer>();
+  for (const g of groups) {
+    const key = `${g.customerName.trim().toLowerCase()}|${g.customerPhone.replace(/\D/g, "")}`;
+    if (!byKey.has(key))
+      byKey.set(key, { name: g.customerName.trim(), phone: g.customerPhone.trim(), lastDate: g._max.dateFrom ?? "" });
+  }
+  return [...byKey.values()];
+}
+
 export const MAX_RESERVATION_DAYS = 60;
 
 export const reservationInputSchema = z.object({

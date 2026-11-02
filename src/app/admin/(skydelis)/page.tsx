@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { requireAdminPage } from "@/lib/admin-auth";
-import { getReservationsBetween, getUpcomingReservations, MAX_RESERVATION_DAYS } from "@/lib/reservations";
+import {
+  getKnownCustomers,
+  getReservationsBetween,
+  getUpcomingReservations,
+  MAX_RESERVATION_DAYS,
+} from "@/lib/reservations";
 import { addDays, isIsoDate, todayLt } from "@/lib/format";
 import { ReservationsBoard } from "./reservations-board";
 
@@ -16,10 +21,11 @@ export default async function AdminPage(props: PageProps<"/admin">) {
   const today = todayLt();
   const start = typeof nuo === "string" && isIsoDate(nuo) ? nuo : today;
 
-  const [sectors, reservations, upcoming] = await Promise.all([
+  const [sectors, reservations, upcoming, customers] = await Promise.all([
     prisma.sector.findMany({ where: { active: true }, orderBy: { number: "asc" }, select: { id: true, number: true } }),
     getReservationsBetween(start, addDays(start, BOARD_DAYS)),
     getUpcomingReservations(today),
+    getKnownCustomers(),
   ]);
 
   return (
@@ -30,6 +36,7 @@ export default async function AdminPage(props: PageProps<"/admin">) {
       sectors={sectors}
       reservations={reservations}
       upcoming={upcoming}
+      customers={customers}
       maxDays={MAX_RESERVATION_DAYS}
     />
   );

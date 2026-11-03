@@ -34,11 +34,6 @@ export function SiteFooter() {
                 {site.phone}
               </a>
             </li>
-            <li>
-              <a href={`mailto:${site.email}`} className="hover:text-white">
-                {site.email}
-              </a>
-            </li>
             <li className="text-pine-100/80">{site.address}</li>
           </ul>
         </div>

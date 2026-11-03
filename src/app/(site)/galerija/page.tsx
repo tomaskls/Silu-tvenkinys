@@ -3,7 +3,6 @@ import Link from "next/link";
 import { catchesByDate, catchesByWeight } from "@/content/catches";
 import { PageHeader } from "@/components/page-header";
 import { CatchCard } from "@/components/catch-card";
-import { site } from "@/content/site";
 
 export const metadata: Metadata = {
   title: "Laimikių galerija",
@@ -29,22 +28,13 @@ export default async function GalleryPage(props: PageProps<"/galerija">) {
         image="/images/laimikis-karpis-15-5kg.jpg"
       />
       <div className="container-page py-12">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex gap-2">
-            <Link href="/galerija" className={tabClass(!byWeight)} scroll={false}>
-              Naujausi
-            </Link>
-            <Link href="/galerija?rikiuoti=svoris" className={tabClass(byWeight)} scroll={false}>
-              Didžiausi
-            </Link>
-          </div>
-          <p className="text-sm text-pine-700">
-            Pagavote trofėjų? Atsiųskite nuotrauką{" "}
-            <a href={`mailto:${site.email}`} className="font-semibold underline">
-              el. paštu
-            </a>
-            .
-          </p>
+        <div className="flex gap-2">
+          <Link href="/galerija" className={tabClass(!byWeight)} scroll={false}>
+            Naujausi
+          </Link>
+          <Link href="/galerija?rikiuoti=svoris" className={tabClass(byWeight)} scroll={false}>
+            Didžiausi
+          </Link>
         </div>
 
         {photos.length === 0 ? (

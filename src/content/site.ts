@@ -10,7 +10,6 @@ export const site = {
   tagline: "Limituota žūklė ramioje gamtoje – 10 įrengtų sektorių su lieptais",
   phone: "+370 676 75187",
   phoneHref: "tel:+37067675187",
-  email: "info@silutvenkinys.lt", // TODO: tikras el. paštas
   address: "Šilų (Bridų) tvenkinys, Lietuva", // TODO: tikslus adresas
   location,
   mapEmbedUrl: `https://www.google.com/maps?q=${location.lat},${location.lng}&z=14&output=embed`,

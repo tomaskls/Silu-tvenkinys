@@ -44,29 +44,31 @@ model Reservation {
 }
 
 model Competition {
-  id           Int      @id @default(autoincrement())
-  title        String
-  date         String
-  endDate      String?
-  description  String
-  entryFee     Int?
-  maxTeams     Int?
-  image        String?
+  id          Int      @id @default(autoincrement())
+  title       String
+  date        String
+  endDate     String?
+  description String
+  entryFee    Int?
+  maxTeams    Int?
+  image       String?
   // Rezultatai po varžybų (laisvas tekstas)
-  results      String?
-  published    Boolean  @default(true)
-  createdAt    DateTime @default(now())
+  results     String?
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
 }
 
 model CatchPhoto {
-  id        Int      @id @default(autoincrement())
-  image     String
-  angler    String
-  species   String
-  weightKg  Float?
-  sector    Int?
-  date      String
-  caption   String   @default("")
-  published Boolean  @default(true)
-  createdAt DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  image       String
+  angler      String
+  species     String
+  weightKg    Float?
+  // Rodomas vietoj weightKg, kai svoris netikslus („15+ kg“) ar žuvys kelios
+  weightLabel String?
+  sector      Int?
+  date        String
+  caption     String   @default("")
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
 }

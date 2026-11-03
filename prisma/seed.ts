@@ -1,6 +1,7 @@
 // Pradiniai duomenys: sektoriai, laimikių nuotraukos ir varžybų pavyzdys.
 // Paleidimas: npm run db:seed (saugu kartoti – sektoriai atnaujinami, kiti įrašai kuriami tik jei lentelė tuščia)
 import { PrismaClient } from "@prisma/client";
+import { catchPhotos } from "./catch-photos";
 
 const prisma = new PrismaClient();
 
@@ -34,16 +35,8 @@ async function main() {
   }
 
   if ((await prisma.catchPhoto.count()) === 0) {
-    // TODO: įrašykite tikrus žvejų vardus ir datas
-    await prisma.catchPhoto.createMany({
-      data: [
-        { image: "/images/laimikis-karpis-20kg.jpg", angler: "Žvejys", species: "Karpis", weightKg: 20, date: "2025-07-15", caption: "Tvenkinio rekordas – virš 20 kg" },
-        { image: "/images/laimikis-karpis-15-5kg.jpg", angler: "Žvejys", species: "Karpis", weightKg: 15.5, date: "2025-05-10" },
-        { image: "/images/laimikis-veidrodinis-6-8kg.jpg", angler: "Žvejys", species: "Veidrodinis karpis", weightKg: 6.8, date: "2025-05-01" },
-        { image: "/images/laimikis-karpis-4-6kg.jpg", angler: "Žvejys", species: "Karpis", weightKg: 4.6, sector: 2, date: "2025-08-20" },
-        { image: "/images/laimikis-karpis-lieptas.jpg", angler: "Žvejys", species: "Karpis", date: "2025-04-26" },
-      ],
-    });
+    // Atvirkščiai – tos pačios dienos nuotraukos galerijoje rikiuojamos pagal id mažėjančiai
+    await prisma.catchPhoto.createMany({ data: [...catchPhotos].reverse() });
   }
 
   if ((await prisma.competition.count()) === 0) {

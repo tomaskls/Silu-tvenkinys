@@ -3,6 +3,9 @@
 import type { Prisma } from "@prisma/client";
 
 export const catchPhotos: Prisma.CatchPhotoCreateManyInput[] = [
+  { image: "/images/laimikiai/129.jpg", angler: "", species: "Karpis", weightKg: 20, weightLabel: "20+ kg", date: "2026-08-17", caption: "Naujas tvenkinio rekordas" },
+  // Diena nežinoma – 2026 m. liepa
+  { image: "/images/laimikis-karpis-20kg.jpg", angler: "", species: "Karpis", weightKg: 20, weightLabel: "20+ kg", date: "2026-07-01", caption: "Ankstesnis tvenkinio rekordas" },
   { image: "/images/laimikiai/001.jpg", angler: "", species: "Karpis", weightKg: 15.5, sector: 9, date: "2026-05-16" },
   { image: "/images/laimikiai/002.jpg", angler: "", species: "Karpis", weightKg: 2.4, sector: 2, date: "2025-09-26" },
   { image: "/images/laimikiai/003.jpg", angler: "", species: "Karpis", weightKg: 7.1, sector: 2, date: "2025-09-26" },
@@ -131,7 +134,6 @@ export const catchPhotos: Prisma.CatchPhotoCreateManyInput[] = [
   { image: "/images/laimikiai/126.jpg", angler: "", species: "Karpis", weightKg: 3.5, date: "2025-03-29" },
   { image: "/images/laimikiai/127.jpg", angler: "", species: "Karpis", weightKg: 2.5, date: "2025-03-29" },
   { image: "/images/laimikiai/128.jpg", angler: "", species: "Karpis", weightKg: 5.3, date: "2025-03-29" },
-  // Tikslios datos nežinomos
-  { image: "/images/laimikis-karpis-20kg.jpg", angler: "", species: "Karpis", weightKg: 20, weightLabel: "20+ kg", date: "2025-07-15", caption: "Tvenkinio rekordas" },
+  // Tiksli data nežinoma
   { image: "/images/laimikis-karpis-lieptas.jpg", angler: "", species: "Karpis", date: "2025-04-26" },
 ];

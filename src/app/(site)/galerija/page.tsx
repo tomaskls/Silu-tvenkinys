@@ -18,7 +18,9 @@ export default async function GalleryPage(props: PageProps<"/galerija">) {
 
   const photos = await prisma.catchPhoto.findMany({
     where: { published: true },
-    orderBy: byWeight ? [{ weightKg: { sort: "desc", nulls: "last" } }] : [{ date: "desc" }, { id: "desc" }],
+    orderBy: byWeight
+      ? [{ weightKg: { sort: "desc", nulls: "last" } }, { date: "desc" }, { id: "desc" }]
+      : [{ date: "desc" }, { id: "desc" }],
   });
 
   const tabClass = (active: boolean) =>

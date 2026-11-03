@@ -95,11 +95,11 @@ export default async function HomePage() {
         <div className="container-page grid items-center gap-10 py-16 sm:py-20 md:grid-cols-2">
           <div className="relative aspect-4/3 overflow-hidden rounded-2xl">
             <Image
-              src="/images/laimikis-karpis-20kg.jpg"
+              src="/images/laimikiai/129.jpg"
               alt="Tvenkinio rekordas – karpis, sveriantis daugiau nei 20 kg"
               fill
               sizes="(min-width: 768px) 50vw, 100vw"
-              className="object-cover object-[center_55%]"
+              className="object-cover"
             />
             <span className="absolute left-4 top-4 rounded-full bg-wood-500 px-3 py-1 text-sm font-semibold text-white">
               Rekordas: 20+ kg

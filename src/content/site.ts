@@ -37,7 +37,7 @@ export const nav = [
 
 export const pondFacts = [
   { label: "Sektoriai", value: "10" },
-  { label: "Didžiausias karpis", value: "20+ kg" },
+  { label: "Tvenkinio rekordas", value: "20+ kg" },
   { label: "Žūklės tipas", value: "Limituota" },
   { label: "Teritorija", value: "Stebima kameromis" },
 ];

@@ -23,13 +23,22 @@ export default async function CompetitionsPage() {
       <PageHeader
         eyebrow="Varžybos"
         title="Žvejybos varžybos"
-        intro="Karpių žvejybos varžybos komandoms ir individualiems žvejams. Registracija – telefonu arba el. paštu."
         image="/images/varzybos-prizai.jpg"
       />
       <div className="container-page py-12">
         <h2 className="font-display text-3xl font-semibold text-pine-900">Artėjančios</h2>
         {upcoming.length === 0 ? (
-          <p className="mt-4 text-pine-800">Informacija ruošiama.</p>
+          <>
+            <p className="mt-4 text-pine-800">Informacija ruošiama.</p>
+            <Image
+              src="/images/varzybos-prizai.jpg"
+              alt="Varžybų prizai ant liepto prie tvenkinio"
+              width={1600}
+              height={1200}
+              sizes="(min-width: 1024px) 896px, 100vw"
+              className="mt-6 h-auto w-full max-w-4xl rounded-2xl"
+            />
+          </>
         ) : (
           <div className="mt-6 space-y-6">
             {upcoming.map((c) => (

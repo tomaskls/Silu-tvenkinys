@@ -5,6 +5,7 @@ import type { Competition } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { formatDate, formatMoney, todayLt } from "@/lib/format";
 import { PageHeader } from "@/components/page-header";
+import { FramedPhoto } from "@/components/framed-photo";
 
 export const metadata: Metadata = {
   title: "Varžybos",
@@ -64,10 +65,10 @@ export default async function CompetitionsPage() {
 
 function CompetitionCard({ c }: { c: Competition }) {
   return (
-    <article className="grid overflow-hidden rounded-2xl border border-pine-900/10 bg-white md:grid-cols-[280px_1fr]">
-      <div className="relative min-h-48 bg-pine-100">
+    <article className="grid overflow-hidden rounded-2xl border border-pine-900/10 bg-white md:grid-cols-[320px_1fr]">
+      <div className={`relative min-h-72 overflow-hidden ${c.image ? "bg-pine-900" : "bg-pine-100"}`}>
         {c.image ? (
-          <Image src={c.image} alt="" fill sizes="(min-width: 768px) 280px, 100vw" className="object-cover" />
+          <FramedPhoto src={c.image} alt={c.title} sizes="(min-width: 768px) 320px, 100vw" />
         ) : (
           <div className="grid h-full place-items-center p-6 text-center font-display text-3xl font-semibold text-pine-800">
             {formatDate(c.date, { month: "short", day: "numeric" })}
@@ -104,6 +105,15 @@ function CompetitionCard({ c }: { c: Competition }) {
           </div>
         )}
       </div>
+      {c.photos.length > 0 && (
+        <div className="grid grid-cols-2 gap-3 border-t border-pine-900/10 p-4 sm:grid-cols-4 sm:p-6 md:col-span-2">
+          {c.photos.map((p, i) => (
+            <div key={p} className="relative aspect-square overflow-hidden rounded-xl bg-pine-900">
+              <FramedPhoto src={p} alt={`${c.title} – nuotrauka ${i + 1}`} sizes="(min-width: 640px) 25vw, 50vw" />
+            </div>
+          ))}
+        </div>
+      )}
     </article>
   );
 }

@@ -52,6 +52,8 @@ model Competition {
   entryFee    Int?
   maxTeams    Int?
   image       String?
+  // Papildomos nuotraukos (rodomos po rezultatais)
+  photos      String[] @default([])
   // Rezultatai po varžybų (laisvas tekstas)
   results     String?
   published   Boolean  @default(true)

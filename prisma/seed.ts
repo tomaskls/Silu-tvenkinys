@@ -2,6 +2,7 @@
 // Paleidimas: npm run db:seed (saugu kartoti – sektoriai atnaujinami, kiti įrašai kuriami tik jei lentelė tuščia)
 import { PrismaClient } from "@prisma/client";
 import { catchPhotos } from "./catch-photos";
+import { competitions } from "./competitions";
 
 const prisma = new PrismaClient();
 
@@ -40,18 +41,7 @@ async function main() {
   }
 
   if ((await prisma.competition.count()) === 0) {
-    await prisma.competition.create({
-      data: {
-        title: "Pavasario karpių žvejybos varžybos (pavyzdys)",
-        date: "2027-05-14",
-        endDate: "2027-05-16",
-        description:
-          "48 valandų karpių žvejybos varžybos poroms. Sektoriai skirstomi burtų keliu.\nTODO: pakeiskite šį pavyzdį tikra informacija.",
-        entryFee: 8000,
-        maxTeams: 10,
-        image: "/images/sektorius-10.jpg",
-      },
-    });
+    for (const data of competitions) await prisma.competition.create({ data });
   }
 
   console.log("Duomenys įkelti.");

@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 import { prisma } from "@/lib/db";
-import { formatMoney } from "@/lib/format";
 import { pondAbout, site } from "@/content/site";
 import { PageHeader } from "@/components/page-header";
 import { SectorMap } from "@/components/sector-map";
@@ -66,15 +65,6 @@ export default async function AboutPage() {
         </p>
         <div className="mt-6">
           <SectorMap sectors={sectors.map((s) => ({ id: s.id, number: s.number, state: "neutral" }))} />
-        </div>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {sectors.map((s) => (
-            <div key={s.id} className="rounded-xl border border-pine-900/10 bg-white p-4">
-              <p className="font-display text-xl font-semibold text-pine-900">Nr. {s.number}</p>
-              <p className="text-sm text-pine-700">{s.description || s.name}</p>
-              <p className="mt-2 text-sm font-semibold text-wood-600">{formatMoney(s.pricePerDay)} / para</p>
-            </div>
-          ))}
         </div>
         <Link
           href="/rezervacija"

@@ -14,9 +14,11 @@ export const metadata: Metadata = {
 
 const photos = [
   { src: "/images/sektorius-2.jpg", alt: "Sektorius Nr. 2 su nauju lieptu" },
-  { src: "/images/sektorius-3.jpg", alt: "Sektorius Nr. 3 rudenį" },
-  { src: "/images/sektorius-palapine.jpg", alt: "Palapinė prie sektoriaus" },
   { src: "/images/sektorius-9.jpg", alt: "Sektorius Nr. 9" },
+  { src: "/images/sektorius-10.jpg", alt: "Sektorius Nr. 10 su nauju lieptu" },
+  { src: "/images/sektorius-ruduo.jpg", alt: "Sektoriaus lieptas rudenį" },
+  { src: "/images/sektorius-nendres.jpg", alt: "Sektoriaus lieptas tarp nendrių" },
+  { src: "/images/sektorius-palapine.jpg", alt: "Palapinė prie sektoriaus" },
 ];
 
 export default async function AboutPage() {
@@ -74,10 +76,16 @@ export default async function AboutPage() {
         </Link>
       </section>
 
-      <section className="container-page mt-16 grid gap-4 sm:grid-cols-2">
+      <section className="container-page mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {photos.map((p) => (
           <div key={p.src} className="relative aspect-4/3 overflow-hidden rounded-2xl">
-            <Image src={p.src} alt={p.alt} fill sizes="(min-width: 640px) 50vw, 100vw" className="object-cover" />
+            <Image
+              src={p.src}
+              alt={p.alt}
+              fill
+              sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+              className="object-cover"
+            />
           </div>
         ))}
       </section>

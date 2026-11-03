@@ -5,7 +5,6 @@ import type { Competition } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { formatDate, formatMoney, todayLt } from "@/lib/format";
 import { PageHeader } from "@/components/page-header";
-import { site } from "@/content/site";
 
 export const metadata: Metadata = {
   title: "Varžybos",
@@ -25,16 +24,16 @@ export default async function CompetitionsPage() {
         eyebrow="Varžybos"
         title="Žvejybos varžybos"
         intro="Karpių žvejybos varžybos komandoms ir individualiems žvejams. Registracija – telefonu arba el. paštu."
-        image="/images/sektorius-10.jpg"
+        image="/images/varzybos-prizai.jpg"
       />
       <div className="container-page py-12">
         <h2 className="font-display text-3xl font-semibold text-pine-900">Artėjančios</h2>
         {upcoming.length === 0 ? (
-          <p className="mt-4 text-pine-800">Šiuo metu suplanuotų varžybų nėra.</p>
+          <p className="mt-4 text-pine-800">Informacija ruošiama.</p>
         ) : (
           <div className="mt-6 space-y-6">
             {upcoming.map((c) => (
-              <CompetitionCard key={c.id} c={c} upcoming />
+              <CompetitionCard key={c.id} c={c} />
             ))}
           </div>
         )}
@@ -54,7 +53,7 @@ export default async function CompetitionsPage() {
   );
 }
 
-function CompetitionCard({ c, upcoming = false }: { c: Competition; upcoming?: boolean }) {
+function CompetitionCard({ c }: { c: Competition }) {
   return (
     <article className="grid overflow-hidden rounded-2xl border border-pine-900/10 bg-white md:grid-cols-[280px_1fr]">
       <div className="relative min-h-48 bg-pine-100">
@@ -94,14 +93,6 @@ function CompetitionCard({ c, upcoming = false }: { c: Competition; upcoming?: b
             <p className="text-sm font-semibold text-pine-900">Rezultatai</p>
             <p className="mt-1 whitespace-pre-line text-sm text-pine-800">{c.results}</p>
           </div>
-        )}
-        {upcoming && (
-          <a
-            href={site.phoneHref}
-            className="mt-6 inline-block rounded-full bg-lake-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-lake-700"
-          >
-            Registruotis: {site.phone}
-          </a>
         )}
       </div>
     </article>

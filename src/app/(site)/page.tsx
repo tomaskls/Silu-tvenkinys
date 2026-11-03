@@ -140,7 +140,7 @@ export default async function HomePage() {
         <div className="rounded-3xl bg-lake-100 p-8 sm:p-12">
           <h2 className="font-display text-3xl font-semibold text-pine-900">Artėjančios varžybos</h2>
           {competitions.length === 0 ? (
-            <p className="mt-4 text-pine-800">Šiuo metu suplanuotų varžybų nėra. Sekite naujienas!</p>
+            <p className="mt-4 text-pine-800">Informacija ruošiama.</p>
           ) : (
             <ul className="mt-6 grid gap-4 md:grid-cols-2">
               {competitions.map((c) => (

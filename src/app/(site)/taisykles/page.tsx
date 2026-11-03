@@ -14,7 +14,6 @@ export default function RulesPage() {
         eyebrow="Taisyklės"
         title="Žvejybos taisyklės"
         intro="Rūpinamės žuvimi ir vieni kitais. Prašome susipažinti su taisyklėmis prieš atvykstant – rezervuodami sektorių su jomis sutinkate."
-        image="/images/sektorius-3.jpg"
       />
       <div className="container-page grid gap-6 py-16 md:grid-cols-2">
         {rules.map((section, i) => (

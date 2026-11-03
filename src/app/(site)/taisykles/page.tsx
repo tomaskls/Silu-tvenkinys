@@ -11,7 +11,6 @@ export default function RulesPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Taisyklės"
         title="Žvejybos taisyklės"
         intro="Rūpinamės žuvimi ir vieni kitais. Prašome susipažinti su taisyklėmis prieš atvykstant – rezervuodami sektorių su jomis sutinkate."
       />

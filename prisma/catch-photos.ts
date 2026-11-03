@@ -43,7 +43,6 @@ export const catchPhotos: Prisma.CatchPhotoCreateManyInput[] = [
   { image: "/images/laimikiai/079.jpg", angler: "", species: "Karpis", weightKg: 17.3, sector: 5, date: "2025-05-02" },
   { image: "/images/laimikiai/080.jpg", angler: "", species: "Karpis", weightKg: 15.6, sector: 6, date: "2025-05-02" },
   { image: "/images/laimikiai/081.jpg", angler: "", species: "Karpis", weightKg: 11.5, sector: 6, date: "2025-04-27", caption: "Asmeninis rekordas" },
-  { image: "/images/laimikiai/086.jpg", angler: "", species: "Karpis", sector: 4, date: "2025-04-26" },
   { image: "/images/laimikiai/089.jpg", angler: "", species: "Karpis", sector: 4, date: "2025-04-26" },
   { image: "/images/laimikiai/093.jpg", angler: "", species: "Karpis", weightKg: 12.4, sector: 4, date: "2025-04-26" },
   { image: "/images/laimikiai/109.jpg", angler: "", species: "Karpis", weightKg: 5.8, sector: 5, date: "2025-04-21" },
@@ -53,7 +52,6 @@ export const catchPhotos: Prisma.CatchPhotoCreateManyInput[] = [
   { image: "/images/laimikiai/115.jpg", angler: "", species: "Karpis", sector: 8, date: "2025-04-19" },
   { image: "/images/laimikiai/116.jpg", angler: "", species: "Karpis", sector: 8, date: "2025-04-19" },
   { image: "/images/laimikiai/117.jpg", angler: "", species: "Karpis", sector: 8, date: "2025-04-19" },
-  { image: "/images/laimikiai/118.jpg", angler: "", species: "Karpis", sector: 10, date: "2025-04-13" },
   { image: "/images/laimikiai/122.jpg", angler: "", species: "Karpis", date: "2025-04-04" },
   { image: "/images/laimikiai/128.jpg", angler: "", species: "Karpis", weightKg: 5.3, date: "2025-03-29" },
   // Tiksli data nežinoma

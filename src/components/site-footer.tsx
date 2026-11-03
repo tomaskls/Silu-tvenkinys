@@ -39,8 +39,14 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-white/10">
-        <div className="container-page py-5 text-xs text-pine-100/60">
-          © {new Date().getFullYear()} {site.name}. Žvejoti tik su leidimais.
+        <div className="container-page flex flex-col gap-1 py-5 text-xs text-pine-100/60 sm:flex-row sm:justify-between">
+          <p>© {new Date().getFullYear()} {site.name}. Žvejoti tik su leidimais.</p>
+          <p>
+            Sukurta{" "}
+            <a href="https://www.tmh.lt/lt" target="_blank" rel="noopener" className="font-semibold text-pine-100/80 hover:text-white">
+              Tomorrow&apos;s Media House
+            </a>
+          </p>
         </div>
       </div>
     </footer>

@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { connection } from "next/server";
-import type { Competition } from "@prisma/client";
-import { prisma } from "@/lib/db";
 import { formatDate, formatMoney, todayLt } from "@/lib/format";
+import { pastCompetitions, upcomingCompetitions, type Competition } from "@/content/competitions";
 import { PageHeader } from "@/components/page-header";
 import { FramedPhoto } from "@/components/framed-photo";
 
@@ -15,9 +14,8 @@ export const metadata: Metadata = {
 export default async function CompetitionsPage() {
   await connection();
   const today = todayLt();
-  const all = await prisma.competition.findMany({ where: { published: true }, orderBy: { date: "asc" } });
-  const upcoming = all.filter((c) => (c.endDate ?? c.date) >= today);
-  const past = all.filter((c) => (c.endDate ?? c.date) < today).reverse();
+  const upcoming = upcomingCompetitions(today);
+  const past = pastCompetitions(today);
 
   return (
     <>
@@ -36,14 +34,14 @@ export default async function CompetitionsPage() {
               alt="Varžybų prizai ant liepto prie tvenkinio"
               width={1600}
               height={1200}
-              sizes="(min-width: 1024px) 896px, 100vw"
-              className="mt-6 h-auto w-full max-w-4xl rounded-2xl"
+              sizes="(min-width: 640px) 512px, 100vw"
+              className="mt-6 h-auto w-full max-w-lg rounded-2xl"
             />
           </>
         ) : (
           <div className="mt-6 space-y-6">
             {upcoming.map((c) => (
-              <CompetitionCard key={c.id} c={c} />
+              <CompetitionCard key={c.title + c.date} c={c} />
             ))}
           </div>
         )}
@@ -53,7 +51,7 @@ export default async function CompetitionsPage() {
             <h2 className="mt-16 font-display text-3xl font-semibold text-pine-900">Įvykusios</h2>
             <div className="mt-6 space-y-6">
               {past.map((c) => (
-                <CompetitionCard key={c.id} c={c} />
+                <CompetitionCard key={c.title + c.date} c={c} />
               ))}
             </div>
           </>
@@ -105,7 +103,7 @@ function CompetitionCard({ c }: { c: Competition }) {
           </div>
         )}
       </div>
-      {c.photos.length > 0 && (
+      {c.photos && c.photos.length > 0 && (
         <div className="grid grid-cols-2 gap-3 border-t border-pine-900/10 p-4 sm:grid-cols-4 sm:p-6 md:col-span-2">
           {c.photos.map((p, i) => (
             <div key={p} className="relative aspect-square overflow-hidden rounded-xl bg-pine-900">

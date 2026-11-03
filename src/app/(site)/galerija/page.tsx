@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { connection } from "next/server";
-import { prisma } from "@/lib/db";
+import { catchesByDate, catchesByWeight } from "@/content/catches";
 import { PageHeader } from "@/components/page-header";
 import { CatchCard } from "@/components/catch-card";
 import { site } from "@/content/site";
@@ -12,16 +11,9 @@ export const metadata: Metadata = {
 };
 
 export default async function GalleryPage(props: PageProps<"/galerija">) {
-  await connection();
   const { rikiuoti } = await props.searchParams;
   const byWeight = rikiuoti === "svoris";
-
-  const photos = await prisma.catchPhoto.findMany({
-    where: { published: true },
-    orderBy: byWeight
-      ? [{ weightKg: { sort: "desc", nulls: "last" } }, { date: "desc" }, { id: "desc" }]
-      : [{ date: "desc" }, { id: "desc" }],
-  });
+  const photos = byWeight ? catchesByWeight() : catchesByDate();
 
   const tabClass = (active: boolean) =>
     `rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
@@ -60,7 +52,7 @@ export default async function GalleryPage(props: PageProps<"/galerija">) {
         ) : (
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {photos.map((p) => (
-              <CatchCard key={p.id} photo={p} />
+              <CatchCard key={p.image} photo={p} />
             ))}
           </div>
         )}

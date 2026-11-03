@@ -1,23 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
-import { prisma } from "@/lib/db";
 import { formatDate, todayLt } from "@/lib/format";
 import { pondFacts, site } from "@/content/site";
+import { catchesByDate } from "@/content/catches";
+import { upcomingCompetitions } from "@/content/competitions";
 import { CatchCard } from "@/components/catch-card";
 import { FreeSectors } from "@/components/free-sectors";
 
 export default async function HomePage() {
   await connection();
   const today = todayLt();
-  const [catches, competitions] = await Promise.all([
-    prisma.catchPhoto.findMany({ where: { published: true }, orderBy: { date: "desc" }, take: 3 }),
-    prisma.competition.findMany({
-      where: { published: true, date: { gte: today } },
-      orderBy: { date: "asc" },
-      take: 2,
-    }),
-  ]);
+  const catches = catchesByDate().slice(0, 3);
+  const competitions = upcomingCompetitions(today).slice(0, 2);
 
   return (
     <>
@@ -129,7 +124,7 @@ export default async function HomePage() {
           </div>
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {catches.map((c) => (
-              <CatchCard key={c.id} photo={c} />
+              <CatchCard key={c.image} photo={c} />
             ))}
           </div>
         </section>
@@ -144,7 +139,7 @@ export default async function HomePage() {
           ) : (
             <ul className="mt-6 grid gap-4 md:grid-cols-2">
               {competitions.map((c) => (
-                <li key={c.id} className="rounded-2xl bg-white p-6">
+                <li key={c.title + c.date} className="rounded-2xl bg-white p-6">
                   <p className="text-sm font-semibold text-lake-700">{formatDate(c.date)}</p>
                   <p className="mt-1 text-lg font-semibold text-pine-900">{c.title}</p>
                 </li>

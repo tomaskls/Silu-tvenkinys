@@ -8,7 +8,7 @@ Next.js 16 (App Router) + Tailwind CSS 4 + Prisma + PostgreSQL (Neon per Vercel)
 npm install
 vercel env pull .env      # DATABASE_URL ir kt. iš Vercel (arba cp .env.example .env)
 npm run db:push           # sukuria/atnaujina lenteles
-npm run db:seed           # 10 sektorių, laimikiai, varžybų pavyzdys
+npm run db:seed           # 10 sektorių
 npm run dev               # http://localhost:3000
 ```
 
@@ -20,8 +20,8 @@ Duomenų bazės peržiūra/redagavimas: `npm run db:studio`.
 |---|---|
 | `/` | Pradžia |
 | `/apie` | Apie tvenkinį, sektorių žemėlapis |
-| `/galerija` | Laimikių galerija (`CatchPhoto` lentelė) |
-| `/varzybos` | Varžybos (`Competition` lentelė) |
+| `/galerija` | Laimikių galerija ([src/content/catches.ts](src/content/catches.ts)) |
+| `/varzybos` | Varžybos ([src/content/competitions.ts](src/content/competitions.ts)) |
 | `/taisykles` | Žvejybos taisyklės |
 | `/rezervacija` | Viešas sektorių užimtumas pagal datą (rezervuojama telefonu) |
 | `/admin` | Užimtumo valdymas: sektorių × dienų lentelė, rezervacijų sąrašas |
@@ -29,7 +29,8 @@ Duomenų bazės peržiūra/redagavimas: `npm run db:studio`.
 
 - **Tekstai, kontaktai, taisyklės** – [src/content/site.ts](src/content/site.ts) (vietos su `TODO` laukia tikrų duomenų).
 - **Kainos ir sektoriai** – `Sector` lentelė (kaina centais), pradinės reikšmės [prisma/seed.ts](prisma/seed.ts).
-- **Nuotraukos** – `public/images/`.
+- **Laimikiai ir varžybos** – [src/content/catches.ts](src/content/catches.ts), [src/content/competitions.ts](src/content/competitions.ts) (ne duomenų bazėje; keičiama per GitHub).
+- **Nuotraukos** – `public/images/` (laimikiai – `laimikiai/`, varžybos – `varzybos/`).
 
 ## Rezervavimas
 

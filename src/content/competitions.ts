@@ -1,7 +1,30 @@
-// Varžybos (naudoja seed.ts – įrašai kuriami, kai lentelė tuščia)
-import type { Prisma } from "@prisma/client";
+// Varžybos – artėjančios ir įvykusios. Nuotraukos – public/images/varzybos/.
 
-export const competitions: Prisma.CompetitionCreateInput[] = [
+export type Competition = {
+  title: string;
+  date: string; // YYYY-MM-DD
+  endDate?: string;
+  description: string;
+  entryFee?: number; // centais
+  maxTeams?: number;
+  image?: string;
+  // Papildomos nuotraukos (rodomos po rezultatais)
+  photos?: string[];
+  // Rezultatai po varžybų (laisvas tekstas)
+  results?: string;
+};
+
+/** Varžybos, kurios dar nesibaigė, artimiausios pirmos. */
+export function upcomingCompetitions(today: string) {
+  return competitions.filter((c) => (c.endDate ?? c.date) >= today).sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/** Įvykusios varžybos, naujausios pirmos. */
+export function pastCompetitions(today: string) {
+  return competitions.filter((c) => (c.endDate ?? c.date) < today).sort((a, b) => b.date.localeCompare(a.date));
+}
+
+export const competitions: Competition[] = [
   {
     title: "Šilų rugpjūčio taurė",
     date: "2026-08-14",

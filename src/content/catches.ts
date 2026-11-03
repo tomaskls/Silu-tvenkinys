@@ -1,8 +1,28 @@
-// Laimikių galerija (naujausi viršuje). Naudoja seed.ts – įrašai kuriami, kai lentelė tuščia.
+// Laimikių galerija. Nuotraukos – public/images/laimikiai/.
 // Kortelėje rodomas tik svoris ir žvejo vardas; weightLabel – kai svoris netikslus („15+ kg“) ar žuvys kelios.
-import type { Prisma } from "@prisma/client";
 
-export const catchPhotos: Prisma.CatchPhotoCreateManyInput[] = [
+export type CatchPhoto = {
+  image: string;
+  angler: string;
+  species: string;
+  weightKg?: number;
+  weightLabel?: string;
+  sector?: number;
+  date: string; // YYYY-MM-DD
+  caption?: string;
+};
+
+/** Naujausi viršuje; tos pačios dienos – kaip surašyta sąraše. */
+export function catchesByDate() {
+  return [...catchPhotos].sort((a, b) => b.date.localeCompare(a.date));
+}
+
+/** Didžiausi viršuje; be svorio – gale, vienodo svorio – naujesni pirmiau. */
+export function catchesByWeight() {
+  return catchesByDate().sort((a, b) => (b.weightKg ?? -1) - (a.weightKg ?? -1));
+}
+
+export const catchPhotos: CatchPhoto[] = [
   { image: "/images/laimikiai/129.jpg", angler: "", species: "Karpis", weightKg: 20, weightLabel: "20+ kg", date: "2026-08-17", caption: "Naujas tvenkinio rekordas" },
   // Diena nežinoma – 2026 m. liepa
   { image: "/images/laimikis-karpis-20kg.jpg", angler: "", species: "Karpis", weightKg: 20, weightLabel: "20+ kg", date: "2026-07-01", caption: "Ankstesnis tvenkinio rekordas" },

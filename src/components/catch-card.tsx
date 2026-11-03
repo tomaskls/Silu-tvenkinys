@@ -1,4 +1,4 @@
-import type { CatchPhoto } from "@prisma/client";
+import type { CatchPhoto } from "@/content/catches";
 import { FramedPhoto } from "@/components/framed-photo";
 
 export function CatchCard({ photo }: { photo: CatchPhoto }) {

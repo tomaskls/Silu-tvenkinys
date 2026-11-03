@@ -4,6 +4,7 @@ import { getDailyFreeCounts, getSectorAvailability } from "@/lib/reservations";
 import { addDays, todayLt } from "@/lib/format";
 import { site } from "@/content/site";
 import { PageHeader } from "@/components/page-header";
+import { FreeSectors } from "@/components/free-sectors";
 import { OccupancyView } from "./occupancy-view";
 
 export const metadata: Metadata = {
@@ -30,7 +31,9 @@ export default async function OccupancyPage() {
         title="Sektorių užimtumas"
         intro={`Pasirinkite datą ir pažiūrėkite, kurie sektoriai laisvi. Rezervuoti galima telefonu ${site.phone}. Para – nuo ${site.booking.checkInTime} iki ${site.booking.checkOutTime} kitą dieną.`}
         image="/images/sektorius-2.jpg"
-      />
+      >
+        <FreeSectors today={today} />
+      </PageHeader>
       <div className="container-page py-12">
         <OccupancyView
           today={today}

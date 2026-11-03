@@ -1,6 +1,9 @@
 // Visa redaguojama svetainės informacija vienoje vietoje.
 // Vietas, pažymėtas „TODO“, reikia užpildyti tikrais duomenimis.
 
+// Tvenkinio vieta (Google Maps koordinatės)
+const location = { lat: "55.995170", lng: "23.344508" };
+
 export const site = {
   name: "Šilų (Bridų) tvenkinys",
   shortName: "Šilų tvenkinys",
@@ -9,8 +12,10 @@ export const site = {
   phoneHref: "tel:+37067675187",
   email: "info@silutvenkinys.lt", // TODO: tikras el. paštas
   address: "Šilų (Bridų) tvenkinys, Lietuva", // TODO: tikslus adresas
-  // TODO: įrašykite tikslias koordinates (Google Maps → dešinys pelės mygtukas → koordinatės)
-  mapEmbedUrl: "",
+  location,
+  mapEmbedUrl: `https://www.google.com/maps?q=${location.lat},${location.lng}&z=14&output=embed`,
+  directionsUrl: `https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}`,
+  wazeUrl: `https://waze.com/ul?ll=${location.lat},${location.lng}&navigate=yes`,
   facebookUrl: "", // TODO
 
   booking: {
@@ -46,7 +51,7 @@ export const pondAbout = {
     "Sektoriai išdėstyti abiejuose tvenkinio krantuose: 1–5 šiauriniame krante, 6 vakariniame gale, 7–10 pietiniame krante. Viduryje tvenkinio yra nedidelė sala.",
     // TODO: papildykite – plotas, gylis, žuvų rūšys, įžuvinimas, patogumai (WC, automobilių stovėjimas, palapinės ir pan.)
   ],
-  species: ["Karpis", "Amūras", "Lynas", "Karosas"], // TODO: patikslinti
+  species: ["Karpis", "Amūras", "Lynas"], // TODO: patikslinti
   amenities: [
     "Mediniai lieptai kiekviename sektoriuje",
     "Vieta palapinei ir kėdėms prie sektoriaus",

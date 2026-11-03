@@ -94,20 +94,44 @@ export default async function AboutPage() {
 
       <section className="container-page mt-16">
         <h2 className="font-display text-3xl font-semibold text-pine-900">Kaip atvykti</h2>
-        <p className="mt-2 text-pine-800">{site.address}</p>
-        {site.mapEmbedUrl ? (
-          <iframe
-            src={site.mapEmbedUrl}
-            className="mt-6 h-96 w-full rounded-2xl border-0"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            title="Tvenkinio vieta žemėlapyje"
-          />
-        ) : (
-          <p className="mt-4 rounded-xl bg-sand-100 p-4 text-sm text-pine-700">
-            Tikslią vietą ir atvykimo instrukcijas suteiksime paskambinus: <a className="font-semibold underline" href={site.phoneHref}>{site.phone}</a>
-          </p>
-        )}
+        <p className="mt-2 text-pine-800">
+          Koordinatės:{" "}
+          <span className="font-semibold text-pine-900">
+            {site.location.lat}, {site.location.lng}
+          </span>
+        </p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <a
+            href={site.directionsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-full bg-wood-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-wood-600"
+          >
+            Maršrutas Google Maps
+          </a>
+          <a
+            href={site.wazeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-full border border-pine-900/20 bg-white px-6 py-3 font-semibold text-pine-900 transition-colors hover:bg-pine-50"
+          >
+            Maršrutas Waze
+          </a>
+        </div>
+        <iframe
+          src={site.mapEmbedUrl}
+          className="mt-6 h-96 w-full rounded-2xl border-0"
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          title="Tvenkinio vieta žemėlapyje"
+        />
+        <p className="mt-3 text-sm text-pine-700">
+          Nerandate kelio? Skambinkite{" "}
+          <a className="font-semibold underline" href={site.phoneHref}>
+            {site.phone}
+          </a>
+          .
+        </p>
       </section>
     </>
   );

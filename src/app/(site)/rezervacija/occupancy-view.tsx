@@ -160,7 +160,6 @@ export function OccupancyView(props: Props) {
         <div className="mb-3 flex flex-wrap items-center gap-4 text-sm">
           <Legend className="bg-emerald-600" label="Laisvas" />
           <Legend className="bg-red-600" label="Užimtas" />
-          <Legend className="bg-wood-500" label="Pasirinktas" />
           <span className="ml-auto text-pine-700" aria-live="polite">
             {loadingSectors ? "Tikrinamas užimtumas…" : `Laisva: ${freeCount} iš ${sectors.length}`}
           </span>
@@ -169,26 +168,6 @@ export function OccupancyView(props: Props) {
           <SectorMap sectors={mapSectors} onSelect={setSectorId} />
         </div>
         {loadError && <p className="mt-3 text-sm text-red-700">{loadError}</p>}
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
-          {sectors.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              disabled={!s.available}
-              onClick={() => setSectorId(s.id)}
-              className={`rounded-xl border px-3 py-2 text-left text-sm transition-colors ${
-                s.id === selected?.id
-                  ? "border-wood-500 bg-wood-100"
-                  : s.available
-                    ? "border-pine-900/15 bg-white hover:border-pine-700"
-                    : "cursor-not-allowed border-red-200 bg-red-50 text-red-700"
-              }`}
-            >
-              <span className="block font-semibold">Nr. {s.number}</span>
-              <span className="block whitespace-nowrap text-xs">{s.available ? formatMoney(s.pricePerDay) + " / para" : "Užimtas"}</span>
-            </button>
-          ))}
-        </div>
       </Step>
 
       {/* Rezervacija telefonu */}
@@ -225,7 +204,7 @@ export function OccupancyView(props: Props) {
           {selected
             ? `Sektorius Nr. ${selected.number} šiuo metu laisvas. Užimtumas keičiasi – patvirtinsime skambučio metu.`
             : freeCount > 0
-              ? "Pasirinkite laisvą sektorių žemėlapyje arba sąraše."
+              ? "Pasirinkite laisvą sektorių žemėlapyje."
               : "Šiomis dienomis laisvų sektorių nėra – pasirinkite kitą datą."}
         </p>
       </aside>

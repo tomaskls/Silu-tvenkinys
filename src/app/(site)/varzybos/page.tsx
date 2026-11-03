@@ -19,11 +19,7 @@ export default async function CompetitionsPage() {
 
   return (
     <>
-      <PageHeader
-        eyebrow="Varžybos"
-        title="Žvejybos varžybos"
-        image="/images/varzybos-prizai.jpg"
-      />
+      <PageHeader title="Žvejybos varžybos" image="/images/varzybos-prizai.jpg" />
       <div className="container-page py-12">
         <h2 className="font-display text-3xl font-semibold text-pine-900">Artėjančios</h2>
         {upcoming.length === 0 ? (
